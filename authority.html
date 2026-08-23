@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Administration · Saarthi</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<script>
+// Fix: after signing out, pressing the browser Back button could show this page
+// from the browser's cache without re-checking the session — letting a signed-out
+// person appear to still be inside the dashboard. Force a fresh session check
+// whenever the page is restored from that cache.
+window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
+document.documentElement.dataset.theme=localStorage.getItem("saarthi_theme")||"light";</script>
+<div class="phulkari"></div>
+<div class="dash">
+  <aside class="side">
+    <div class="who"><b id="uName"></b><span id="uMeta"></span><br><span class="auth-badge" id="uBadge" style="margin-top:.4rem"></span></div>
+    <a class="on" data-sec="overview">📊 <span data-i18n="navCityOverview">City overview</span></a>
+    <a data-sec="grievances">🗂️ <span data-i18n="navAllGrievances">All grievances</span></a>
+    <a data-sec="departments">🏢 <span data-i18n="navDepartments">Departments</span></a>
+    <a data-sec="wards">🏘️ <span data-i18n="navWards">Wards</span></a>
+    <a data-sec="people" id="navPeople" hidden>👥 <span data-i18n="navPeopleDir">People directory</span></a>
+    <a data-sec="deptmanage" id="navDeptManage" hidden>🏗️ <span data-i18n="navManageDept">Manage departments</span></a>
+    <a data-sec="credentials" id="navCred" hidden>🔑 <span data-i18n="navCred">Credentials</span></a>
+    <a data-sec="settings" id="navSettings" hidden>⚙️ <span data-i18n="navNotifSettings">Notification settings</span></a>
+    <a data-sec="profile">👤 <span data-i18n="navProfile">My profile</span></a>
+    <a href="#" onclick="goHome();return false;">🏠 <span data-i18n="navHome">Portal home</span></a>
+    <button class="navlink logout" onclick="confirmSignOut()">↩ <span data-i18n="navSignout">Sign out</span></button>
+  </aside>
+
+  <div>
+    <div class="topbar">
+      <div class="hello"><b id="greet"></b><span id="dateLine"></span></div>
+      <div class="gsearch"><span class="ic">🔍</span><input id="globalSearch" placeholder="Search across the entire city…"></div>
+      <div class="wrap-rel">
+        <button class="iconbtn" id="bellBtn">🔔<span class="dot-badge" id="bellDot" hidden></span></button>
+        <div class="pop" id="bellPop"><h5>City-wide escalations</h5><div id="notifList"></div></div>
+      </div>
+      <div class="wrap-rel langsw">
+        <button id="langBtn">🌐 <span id="langCur">EN</span></button>
+        <div class="lang-menu" id="langMenu">
+          <button class="lang-opt" data-lang="en">🇬🇧 English</button>
+          <button class="lang-opt" data-lang="pa">ਪੰ ਪੰਜਾਬੀ</button>
+          <button class="lang-opt" data-lang="hi">हि हिंदी</button>
+        </div>
+      </div>
+      <button class="iconbtn" id="themeBtn">🌙</button>
+      <div class="wrap-rel">
+        <button class="avatar" id="avaBtn"></button>
+        <div class="pop" id="avaPop" style="width:230px">
+          <h5>Signed in as</h5>
+          <div class="item"><div><div class="t" id="popName"></div><div class="s" id="popMeta"></div></div></div>
+          <div class="item" style="cursor:pointer" onclick="exportCSV()">⬇️ <div class="t">Export full record (CSV)</div></div>
+          <div class="item" style="cursor:pointer" onclick="window.print()">🖨️ <div class="t">Print this page</div></div>
+          <div class="item" style="cursor:pointer;color:var(--danger)" onclick="confirmSignOut()">↩ <div class="t">Sign out</div></div>
+        </div>
+      </div>
+    </div>
+
+    <main class="main">
+      <section class="dash-sec on" id="sec-overview">
+        <h2 class="pg" id="pgTitle"></h2>
+        <p class="pg-sub" id="pgSub"></p>
+
+        <div class="filter-bar">
+          <div class="seg-ctl" id="rangeCtl">
+            <button data-range="1">24 hours</button>
+            <button data-range="7">7 days</button>
+            <button class="on" data-range="30">30 days</button>
+            <button data-range="180">6 months</button>
+            <button data-range="0">All time</button>
+          </div>
+        </div>
+
+        <div class="grid-4" style="margin-bottom:1.1rem">
+          <div class="card kpi c-blue"><div class="top"><span class="lbl" data-i18n="kpiTotalGriev">Total grievances</span><div class="ic">🗂️</div></div><b id="kTotal">0</b></div>
+          <div class="card kpi c-amber"><div class="top"><span class="lbl" data-i18n="kpiOpenCity">Open across city</span><div class="ic">⏳</div></div><b id="kOpen">0</b></div>
+          <div class="card kpi c-green"><div class="top"><span class="lbl" data-i18n="kpiResolved">Resolved</span><div class="ic">✅</div></div><b id="kDone">0</b></div>
+          <div class="card kpi c-red"><div class="top"><span class="lbl" data-i18n="kpiEscalated">Escalated</span><div class="ic">⚠️</div></div><b id="kEsc">0</b></div>
+        </div>
+
+        <div class="split" style="margin-bottom:1.1rem">
+          <div class="panel"><div class="p-head"><h3>Load by department</h3></div><div class="p-body" id="chDonut"></div></div>
+          <div class="panel"><div class="p-head"><h3>City-wide SLA compliance</h3></div><div class="p-body" style="text-align:center" id="chGauge"></div></div>
+        </div>
+        <div class="split">
+          <div class="panel"><div class="p-head"><h3>Filing trend</h3><span class="sub" id="trendLabel">Last 6 months</span></div><div class="p-body" id="chBars"></div></div>
+          <div class="panel"><div class="p-head"><h3>Escalation watchlist</h3><span class="sub">Needs higher-level attention</span></div><div class="p-body" id="watchList"></div></div>
+        </div>
+      </section>
+
+      <section class="dash-sec" id="sec-grievances">
+        <h2 class="pg">All grievances</h2>
+        <p class="pg-sub">Full city record — every department, every ward.</p>
+        <div class="filter-bar">
+          <select id="fStatus"><option value="" data-i18n="allStatuses">All statuses</option></select>
+          <select id="fDept"><option value="" data-i18n="allDepts">All departments</option></select>
+          <select id="fWard"><option value="" data-i18n="allWards">All wards</option></select>
+          <input id="fSearch" placeholder="Search application no. / subject / citizen" data-i18n-ph="searchAppSubject">
+          <button class="btn btn-outline btn-sm" onclick="exportCSV()" data-i18n="csvShort">⬇️ CSV</button>
+        </div>
+        <div id="listArea"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-departments">
+        <h2 class="pg">Department performance</h2>
+        <p class="pg-sub">Disposal rate and load for every department, city-wide.</p>
+        <div class="panel"><div class="p-head"><h3>All 11 departments</h3></div><div class="p-body" id="deptRows"></div></div>
+      </section>
+
+      <section class="dash-sec" id="sec-wards">
+        <h2 class="pg">Ward performance</h2>
+        <p class="pg-sub">All 20 wards of Rajpura — grievance load and resolution.</p>
+        <div class="panel"><div class="p-head"><h3>All 20 wards</h3></div><div class="p-body" id="wardRows"></div></div>
+      </section>
+
+      <section class="dash-sec" id="sec-people">
+        <h2 class="pg">People directory</h2>
+        <p class="pg-sub">Every registered citizen and every department officer on Saarthi.</p>
+        <div class="filter-bar">
+          <div class="seg-ctl">
+            <button class="on" id="ppCitizens">Citizens</button>
+            <button id="ppOfficers">Officers &amp; MCs</button>
+          </div>
+          <select id="ppWard"><option value="" data-i18n="allWards">All wards</option></select>
+          <input id="ppSearch" placeholder="Search by name or phone" data-i18n-ph="searchNamePhone">
+          <button class="btn btn-outline btn-sm" onclick="exportPeopleCSV()" data-i18n="btnExportCSV">⬇️ Export CSV</button>
+        </div>
+        <div id="peopleArea"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-deptmanage">
+        <h2 class="pg">Manage departments</h2>
+        <p class="pg-sub" id="deptManageSub">Create new departments and build officer hierarchy — no code changes required.</p>
+
+        <div class="split" style="margin-bottom:1.2rem" id="deptFormsPanel">
+          <div class="panel">
+            <div class="p-head"><h3>➕ Add a new department</h3></div>
+            <div class="p-body">
+              <form id="newDeptForm">
+                <div class="form-grid">
+                  <div class="field"><label>Department name <span class="req">*</span></label><input id="ndName" placeholder="e.g. Parks & Horticulture" required></div>
+                  <div class="field"><label>Icon (emoji)</label><input id="ndIco" placeholder="🌳" maxlength="4"></div>
+                  <div class="field full"><label>Head officer's designation <span class="req">*</span></label><input id="ndDesignation" placeholder="e.g. Horticulture Officer" required></div>
+                  <div class="field"><label>Head officer's name <span class="req">*</span></label><input id="ndOffName" required></div>
+                  <div class="field"><label>Contact number <span class="req">*</span></label><input id="ndOffPhone" maxlength="10" required></div>
+                  <div class="field full"><label>Office address</label><input id="ndOffice" placeholder="e.g. Parks Office, Model Town, Rajpura"></div>
+                  <div class="field full"><label style="display:flex;align-items:center;gap:.5rem"><input type="checkbox" id="ndEmergency" style="width:auto"> Emergency service — 24-hour resolution SLA (instead of standard 36 hours)</label></div>
+                </div>
+                <button class="btn btn-pine" type="submit">Create department</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="p-head"><h3>👷 Add an officer to a department</h3><span class="sub">Build hierarchy</span></div>
+            <div class="p-body">
+              <form id="addOfficerForm">
+                <div class="field"><label>Department <span class="req">*</span></label>
+                  <select id="aoDept" required></select></div>
+                <div class="form-grid">
+                  <div class="field"><label>Officer name <span class="req">*</span></label><input id="aoName" required></div>
+                  <div class="field"><label>Designation <span class="req">*</span></label><input id="aoDesignation" placeholder="e.g. Sub-Divisional Officer" required></div>
+                  <div class="field"><label>Contact number <span class="req">*</span></label><input id="aoPhone" maxlength="10" required></div>
+                  <div class="field"><label>Hierarchy rank</label><input id="aoRank" type="number" min="1" value="2">
+                    <div class="hint">1 = department head (most senior). Higher numbers are more junior — a new front-line hire should get a higher number than the existing head.</div></div>
+                  <div class="field full"><label>Office address</label><input id="aoOffice"></div>
+                </div>
+                <button class="btn btn-pine" type="submit">Add to hierarchy</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel"><div class="p-head"><h3>All departments &amp; hierarchy</h3><span class="sub" id="deptCount"></span></div>
+          <div class="p-body" id="deptHierarchy"></div></div>
+      </section>
+
+      <section class="dash-sec" id="sec-credentials">
+        <h2 class="pg">Credential management</h2>
+        <p class="pg-sub">Set or reset login passwords for department officers, Municipal Councillors, and senior authority accounts. Changes take effect immediately.</p>
+        <div class="filter-bar">
+          <div class="seg-ctl">
+            <button class="on" id="credOfficers">Officers</button>
+            <button id="credMCs">Councillors (MC)</button>
+            <button id="credAuth" hidden>Authority accounts</button>
+          </div>
+        </div>
+        <div id="credArea"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-settings">
+        <h2 class="pg">Notification settings</h2>
+        <p class="pg-sub">Control whether Saarthi sends confirmation and status-update emails/SMS to citizens.</p>
+        <div class="panel" style="max-width:640px">
+          <div class="p-head"><h3>Email &amp; SMS notifications</h3></div>
+          <div class="p-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem">
+              <div>
+                <b style="font-size:.92rem">Send email &amp; SMS to citizens</b>
+                <p style="font-size:.8rem;color:var(--muted);margin-top:.2rem">When off, no new grievance-filed or status-change notifications will be sent to anyone, portal-wide.</p>
+              </div>
+              <label class="switch"><input type="checkbox" id="notifyToggle"><span class="slider"></span></label>
+            </div>
+            <div class="notice info">This is a prototype simulation — real delivery would use Nodemailer (email) and Twilio (SMS) on the backend. Every simulated send is logged below exactly as it would be sent.</div>
+          </div>
+        </div>
+        <div class="panel" id="maintenancePanel" style="max-width:640px;margin-top:1.1rem;display:none">
+          <div class="p-head"><h3>🛠️ Site maintenance</h3><span class="sub" id="maintStatusBadge"></span></div>
+          <div class="p-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem">
+              <div>
+                <b style="font-size:.92rem">Take the site offline</b>
+                <p style="font-size:.8rem;color:var(--muted);margin-top:.2rem">Citizens, officers, and councillors will see a "temporarily unavailable" page instead of their dashboards. Administration sign-in always stays reachable so you can turn it back on.</p>
+              </div>
+              <label class="switch"><input type="checkbox" id="maintToggle"><span class="slider"></span></label>
+            </div>
+            <div class="field"><label>Message shown to visitors (optional)</label>
+              <input id="maintMessage" placeholder="e.g. We're upgrading Saarthi — back shortly."></div>
+            <div class="field"><label>Automatically reopen at (optional)</label>
+              <input id="maintReopenAt" type="datetime-local">
+              <div class="hint">Leave blank to keep the site closed until you switch it back on yourself.</div></div>
+            <button class="btn btn-pine btn-sm" id="maintSaveBtn">Save maintenance settings</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:1.1rem">
+          <div class="p-head"><h3>Recent notification log</h3><span class="sub" id="notifCount"></span></div>
+          <div class="p-body"><div id="notifLog"></div></div>
+        </div>
+      </section>
+
+      <section class="dash-sec" id="sec-profile">
+        <h2 class="pg">My profile</h2>
+        <p class="pg-sub">Your authority record on Saarthi.</p>
+        <div class="panel" style="max-width:600px">
+          <div class="p-head"><h3>Account details</h3></div>
+          <div class="p-body"><dl class="kv" id="authProfileKV"></dl></div>
+        </div>
+        <div class="panel" style="max-width:600px;margin-top:1.1rem" id="adminPwPanel">
+          <div class="p-head"><h3>Change my password</h3></div>
+          <div class="p-body">
+            <form id="adminPwForm">
+              <div class="field"><label>Current password</label><input type="password" id="curPw" required></div>
+              <div class="field"><label>New password</label><input type="password" id="newPw" minlength="6" required></div>
+              <div class="field"><label>Confirm new password</label><input type="password" id="confirmPw" minlength="6" required></div>
+              <button class="btn btn-pine" type="submit">Update password</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal"><div class="m-head"><h3 id="mTitle"></h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="m-body" id="mBody"></div></div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/notify.js"></script>
+<script src="js/demo-seed.js"></script>
+<script>
+initI18nSwitcher(() => { if (window.__renderAuthority) window.__renderAuthority(); });
+document.getElementById('langBtn')?.addEventListener('click', e => { e.stopPropagation(); document.getElementById('langMenu').classList.toggle('open'); });
+document.addEventListener('click', () => document.getElementById('langMenu')?.classList.remove('open'));
+const me = Session.current();
+if (!me || !['admin','dc','eo','cmo','minister'].includes(me.role)) { location.href = 'login.html'; }
+else runEscalations();
+
+if (me) {
+  const ROLE_META = {
+    admin: { badge:'System Administrator', title:'City-wide administration overview', sub:'Every grievance across every department and ward is visible from this console.' },
+    dc:    { badge:'Deputy Commissioner', title:'District oversight — Rajpura', sub:'Full grievance record for the Deputy Commissioner’s review, across all departments and wards.' },
+    eo:    { badge:'Executive Officer, MC Rajpura', title:'Municipal Committee oversight', sub:'All grievances routed through or concerning the 20 Municipal Councillors of Rajpura, plus full city visibility.' },
+    cmo:   { badge:'CMO Punjab', title:'Chief Minister\'s Office — statewide oversight', sub:'The top of the escalation chain. Every grievance is visible from filing to resolution, with authority to refer any file directly to a department\'s senior-most officer.' },
+    minister: { badge:'Minister, Local Government', title:'Minister of Local Government — statewide oversight', sub:'The same authority as the Chief Minister\'s Office over every department, ward, and grievance across Punjab.' }
+  };
+  const meta = ROLE_META[me.role];
+  document.getElementById('uName').textContent = me.name;
+  document.getElementById('uMeta').textContent = me.title;
+  document.getElementById('uBadge').textContent = meta.badge;
+  document.getElementById('pgTitle').textContent = meta.title;
+  document.getElementById('pgSub').textContent = meta.sub;
+
+  const hr = new Date().getHours();
+  document.getElementById('greet').textContent = `${hr<12?t('greetMorning'):hr<17?t('greetAfternoon'):t('greetEvening')}, ${me.name.split(' ')[0]}`;
+  document.getElementById('dateLine').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('avaBtn').textContent = me.name[0];
+  document.getElementById('popName').textContent = me.name;
+  document.getElementById('popMeta').textContent = me.title;
+
+  const themeBtn = document.getElementById('themeBtn');
+  const applyTheme = t => { document.documentElement.dataset.theme=t; themeBtn.textContent=t==='dark'?'☀️':'🌙'; localStorage.setItem('saarthi_theme',t); };
+  applyTheme(localStorage.getItem('saarthi_theme')||'light');
+  themeBtn.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
+  const toggle=(btn,pop)=>btn.addEventListener('click',e=>{e.stopPropagation();document.querySelectorAll('.pop').forEach(p=>p!==pop&&p.classList.remove('open'));pop.classList.toggle('open');});
+  toggle(document.getElementById('bellBtn'),document.getElementById('bellPop'));
+  toggle(document.getElementById('avaBtn'),document.getElementById('avaPop'));
+  document.addEventListener('click',()=>document.querySelectorAll('.pop').forEach(p=>p.classList.remove('open')));
+  document.querySelectorAll('.pop').forEach(p=>p.addEventListener('click',e=>e.stopPropagation()));
+
+  function go(sec){
+    document.querySelectorAll('.dash-sec').forEach(s=>s.classList.toggle('on', s.id==='sec-'+sec));
+    document.querySelectorAll('.side a[data-sec]').forEach(a=>a.classList.toggle('on', a.dataset.sec===sec));
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  document.querySelectorAll('.side a[data-sec]').forEach(a=>a.addEventListener('click',()=>go(a.dataset.sec)));
+  if (['admin','dc','cmo','minister'].includes(me.role)) {
+    document.getElementById('navCred').hidden = false;
+    document.getElementById('navSettings').hidden = false;
+    document.getElementById('navPeople').hidden = false;
+  }
+  if (['admin','dc','cmo','minister'].includes(me.role)) document.getElementById('navDeptManage').hidden = false;
+
+  // Scope: admin & dc see the entire city. eo sees the entire city too (as head of the
+  // Municipal Committee overseeing all 20 MCs) — the watchlist below highlights MC-routed files for them.
+  const isDone = c => [STATUS.RESOLVED, STATUS.CLOSED].includes(c.status);
+  const allComplaints = () => DB.get('complaints');
+
+  let selectedRangeDays = 30;   // default matches the "on" button in the segmented control
+  document.querySelectorAll('#rangeCtl button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#rangeCtl button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+    selectedRangeDays = Number(b.dataset.range);
+    renderOverview();
+  }));
+  const inRange = c => selectedRangeDays === 0 || (Date.now() - c.createdAt) <= selectedRangeDays * 864e5;
+
+  function renderOverview(){
+    const all = allComplaints().filter(inRange), open = all.filter(c => !isDone(c));
+    document.getElementById('kTotal').textContent = all.length;
+    document.getElementById('kOpen').textContent = open.length;
+    document.getElementById('kDone').textContent = all.length - open.length;
+    document.getElementById('kEsc').textContent = all.filter(c => c.escalated).length;
+
+    const byDept = Object.entries(all.reduce((a,c)=>{const n=deptById(c.dept).name;a[n]=(a[n]||0)+1;return a;},{}))
+      .map(([label,value])=>({label,value})).sort((a,b)=>b.value-a.value);
+    document.getElementById('chDonut').innerHTML = donut(byDept);
+
+    const pct = all.length ? Math.round(all.filter(c=>!c.escalated).length/all.length*100) : 100;
+    document.getElementById('chGauge').innerHTML = gauge(pct) + `<p style="font-size:.78rem;color:var(--muted);margin-top:.6rem">${all.length-all.filter(c=>c.escalated).length} of ${all.length} within 36 hours, in this range.</p>`;
+
+    // Trend granularity adapts to the selected range: hourly for 24h, daily for 7d/30d, monthly for 6mo/all
+    let labels = [], counts = [];
+    if (selectedRangeDays === 1) {
+      document.getElementById('trendLabel').textContent = 'Last 24 hours';
+      for (let i = 23; i >= 0; i--) {
+        const from = Date.now() - (i+1)*36e5, to = Date.now() - i*36e5;
+        labels.push(new Date(to).getHours() + 'h');
+        counts.push(allComplaints().filter(c => c.createdAt >= from && c.createdAt < to).length);
+      }
+    } else if (selectedRangeDays === 7 || selectedRangeDays === 30) {
+      document.getElementById('trendLabel').textContent = `Last ${selectedRangeDays} days`;
+      const step = selectedRangeDays === 7 ? 1 : 5;
+      for (let i = selectedRangeDays; i >= 0; i -= step) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const from = new Date(d); from.setHours(0,0,0,0);
+        const to = new Date(from); to.setDate(to.getDate() + step);
+        labels.push(d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }));
+        counts.push(allComplaints().filter(c => c.createdAt >= from.getTime() && c.createdAt < to.getTime()).length);
+      }
+    } else {
+      document.getElementById('trendLabel').textContent = selectedRangeDays === 180 ? 'Last 6 months' : 'All time, by month';
+      const span = selectedRangeDays === 180 ? 5 : 5;
+      for (let i = span; i >= 0; i--) {
+        const d = new Date(); d.setMonth(d.getMonth() - i);
+        labels.push(d.toLocaleString('en-IN', { month:'short' }));
+        counts.push(allComplaints().filter(c => { const cd = new Date(c.createdAt); return cd.getMonth() === d.getMonth() && cd.getFullYear() === d.getFullYear(); }).length);
+      }
+    }
+    document.getElementById('chBars').innerHTML = bars(labels.map((l,i) => ({ label:l, value:counts[i] })));
+
+    const watch = open.filter(c => c.escalated).sort((a,b)=>a.createdAt-b.createdAt).slice(0,8);
+    document.getElementById('watchList').innerHTML = watch.length
+      ? watch.map(c=>`<div class="card qcard pri" style="margin-bottom:.6rem;padding:.8rem 1rem;cursor:pointer" onclick="openC('${c.appNo}')">
+          <div style="display:flex;justify-content:space-between;gap:.5rem"><b style="font-size:.86rem">${c.subject}</b>${badge(c)}</div>
+          <div style="font-size:.74rem;color:var(--muted);margin-top:.2rem">${c.appNo} · ${deptById(c.dept).name} · Ward ${c.ward}</div></div>`).join('')
+      : `<div class="chart-empty">No escalations pending in this range.</div>`;
+
+    document.getElementById('bellDot').hidden = !watch.length;
+    document.getElementById('notifList').innerHTML = watch.length
+      ? watch.slice(0,6).map(c=>`<div class="item" style="cursor:pointer" onclick="openC('${c.appNo}')"><div>⚠️</div>
+          <div><div class="t">${c.subject}</div><div class="s">${c.appNo} · ${deptById(c.dept).name}</div></div></div>`).join('')
+      : `<div class="item"><div class="s">No escalations. All departments on track.</div></div>`;
+
+    // DC also sees direct system alerts (e.g. a CMO or Admin referral bypassing them)
+    if (me.role === 'dc') {
+      const alerts = DB.get('systemAlerts').filter(a => a.toRole === 'dc' && !a.read).sort((a,b) => b.at - a.at);
+      if (alerts.length) {
+        document.getElementById('bellDot').hidden = false;
+        document.getElementById('notifList').innerHTML =
+          alerts.slice(0,6).map(a => `<div class="item" style="cursor:pointer" onclick="openC('${a.appNo}')"><div>📨</div>
+            <div><div class="t">${a.message}</div><div class="s">${fmt(a.at)}</div></div></div>`).join('')
+          + document.getElementById('notifList').innerHTML;
+      }
+    }
+  }
+
+  document.getElementById('fStatus').innerHTML += Object.values(STATUS).map(s=>`<option>${s}</option>`).join('');
+  document.getElementById('fDept').innerHTML += allDepartments().map(d=>`<option value="${d.id}">${d.name}</option>`).join('') + `<option value="mc-office">Municipal Councillor</option>`;
+  document.getElementById('fWard').innerHTML += WARDS.map(w=>`<option value="${w.ward}">Ward ${w.ward}</option>`).join('');
+  ['fStatus','fDept','fWard','fSearch'].forEach(id=>document.getElementById(id).addEventListener('input',renderList));
+  document.getElementById('globalSearch').addEventListener('input', e => { document.getElementById('fSearch').value=e.target.value; go('grievances'); renderList(); });
+
+  function renderList(){
+    const s=document.getElementById('fStatus').value, d=document.getElementById('fDept').value, wd=document.getElementById('fWard').value, q=document.getElementById('fSearch').value.toLowerCase();
+    const list = allComplaints().filter(c=>!s||c.status===s).filter(c=>!d||c.dept===d).filter(c=>!wd||c.ward===Number(wd))
+      .filter(c=>!q||c.appNo.includes(q)||c.subject.toLowerCase().includes(q)||c.name.toLowerCase().includes(q))
+      .sort((a,b)=>b.createdAt-a.createdAt);
+    const area = document.getElementById('listArea');
+    if (!list.length){ area.innerHTML=`<div class="card empty"><div class="big">🗃️</div><p><b>No records match.</b></p></div>`; return; }
+    area.innerHTML = `<table class="tbl"><thead><tr><th>${t('thAppNo')}</th><th>${t('thSubjectCitizen')}</th><th>${t('thDept')}</th><th>${t('thWard')}</th><th>${t('thStatus')}</th><th></th></tr></thead><tbody>` +
+      list.map(c=>`<tr><td class="mono">${c.appNo}</td>
+        <td><b>${c.subject}</b><br><span style="font-size:.73rem;color:var(--muted)">${c.name} · ${fmt(c.createdAt)}</span></td>
+        <td>${deptById(c.dept).name}</td><td>Ward ${c.ward}</td><td>${badge(c)}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="openC('${c.appNo}')">Open</button></td></tr>`).join('') + '</tbody></table>';
+  }
+
+  function renderDepartments(){
+    const all = allComplaints();
+    const rows = allDepartments().map(d => ({ label:`${d.ico} ${d.name}`,
+      total: all.filter(c=>c.dept===d.id).length, done: all.filter(c=>c.dept===d.id&&isDone(c)).length }))
+      .sort((a,b)=>b.total-a.total);
+    document.getElementById('deptRows').innerHTML = progressRows(rows);
+  }
+  function renderWards(){
+    const all = allComplaints();
+    const rows = WARDS.map(w => ({ label:`Ward ${w.ward} — ${w.mcName}`,
+      total: all.filter(c=>c.ward===w.ward).length, done: all.filter(c=>c.ward===w.ward&&isDone(c)).length }))
+      .sort((a,b)=>b.total-a.total);
+    document.getElementById('wardRows').innerHTML = progressRows(rows);
+  }
+
+  function exportCSV(){
+    const rows=[['Application No','Subject','Citizen','Department','Ward','Status','Filed On','Escalated']]
+      .concat(allComplaints().map(c=>[c.appNo,`"${c.subject}"`,c.name,deptById(c.dept).name,c.ward,c.status,fmt(c.createdAt),c.escalated?'Yes':'No']));
+    const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='saarthi-city-record.csv'; a.click();
+    toast('Downloaded full city record as CSV.');
+  }
+
+  function openC(appNo){
+    const c = DB.get('complaints').find(x=>x.appNo===appNo);
+    document.getElementById('mTitle').textContent = 'File '+c.appNo;
+
+    // Mark any system alerts about this file as read once the DC opens it
+    if (me.role === 'dc') {
+      const alerts = DB.get('systemAlerts');
+      let changed = false;
+      alerts.forEach(a => { if (a.toRole === 'dc' && a.appNo === appNo && !a.read) { a.read = true; changed = true; } });
+      if (changed) DB.set('systemAlerts', alerts);
+    }
+
+    let closeAction;
+    if (c.forceClosed && c.status === STATUS.CLOSED) {
+      closeAction = ['admin','dc','cmo','minister'].includes(me.role) ? `
+        <div style="border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem">
+          <div class="notice info">This file was force-closed by administrative order.</div>
+          <button class="btn btn-pine btn-sm" onclick="reopenFile('${c.appNo}')">🔓 Reopen this grievance</button>
+        </div>` : `<div class="notice info" style="margin-top:1rem">This file is permanently closed.</div>`;
+    } else if (c.status !== STATUS.CLOSED) {
+      closeAction = `
+        <div style="border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem">
+          <p style="font-weight:700;font-size:.85rem;margin-bottom:.5rem">Administrative action</p>
+          <button class="btn btn-danger btn-sm" onclick="forceClose('${c.appNo}')">🔒 Force close this grievance</button>
+          <p style="font-size:.72rem;color:var(--muted);margin-top:.4rem">Permanently closes the file regardless of current status. Only DC, Admin, CMO Punjab, or the Minister can reopen it. Use only for duplicate, resolved-offline, or invalid grievances.</p>
+        </div>`;
+    } else {
+      closeAction = `<div class="notice info" style="margin-top:1rem">This file is closed.</div>`;
+    }
+
+    // CMO's / Minister's urgent referral — routes straight to the department's most senior officer.
+    const cmoBlock = (['cmo','minister'].includes(me.role) && !isDone(c) && typeof deptById(c.dept) !== 'undefined' && c.dept !== 'mc-office') ? (() => {
+      const top = topOfficerOfDept(c.dept);
+      return top ? `
+        <div style="border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem">
+          <p style="font-weight:700;font-size:.85rem;margin-bottom:.5rem">🚨 ${meta.badge} — urgent referral</p>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem">Sends this file directly to <b>${top.name}</b> (${top.designation}), the senior-most officer in ${deptById(c.dept).name}, flagged for immediate action.</p>
+          <label style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;margin-bottom:.7rem"><input type="checkbox" id="cmoAutoBanCk" style="width:auto"> Automatically suspend this officer's account if they fail to act within the SLA window</label>
+          <button class="btn btn-danger btn-sm" onclick="cmoUrgentForward('${c.appNo}')">🚨 Send urgent referral</button>
+        </div>` : '';
+    })() : '';
+
+    document.getElementById('mBody').innerHTML = `
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">${badge(c)} ${slaTag(c)}</div>
+      ${c.urgentFromCMO && !isDone(c) ? `<div class="notice warn" style="border-left:4px solid var(--danger)">🚨 This file carries an urgent referral from ${c.urgentFromRole || 'CMO Punjab'}${c.cmoAutoBan ? ' with auto-suspension enabled for inaction' : ''}.</div>` : ''}
+      <dl class="kv"><dt>Citizen</dt><dd><b>${c.name}</b> · 📞 ${c.phone} · Ward ${c.ward}</dd>
+        <dt>Subject</dt><dd><b>${c.subject}</b></dd><dt>Department</dt><dd>${deptById(c.dept)?.ico||''} ${deptById(c.dept)?.name||''}</dd>
+        <dt>Description</dt><dd>${c.description}</dd>
+        <dt>Location</dt><dd>${c.address||'Ward '+c.ward+', Rajpura'}${c.coords?`<br><a style="color:var(--primary);font-size:.78rem;font-weight:700" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${c.coords.lat},${c.coords.lng}">📍 View on Google Maps ↗</a>`:''}</dd>
+        ${c.assignedOfficer?`<dt>Assigned officer</dt><dd>${c.assignedOfficer.name} · 📞 ${c.assignedOfficer.phone}</dd>`:''}</dl>
+      ${c.photo?`<p style="font-weight:700;font-size:.85rem;margin:1rem 0 .4rem">Photo evidence</p><img src="${c.photo}" style="max-height:200px;border-radius:10px;border:1px solid var(--line)">`:''}
+      <p style="font-weight:700;font-size:.85rem;margin:1.2rem 0 .6rem">File movement record</p><div class="ledger">${ledgerHTML(c)}</div>
+      ${closeAction}
+      ${cmoBlock}`;
+    document.getElementById('modalBg').classList.add('open');
+  }
+  window.forceClose = async function(appNo){
+    const ok = await confirmDialog({
+      icon:'🔒', title:'Force close this grievance?',
+      message: 'This permanently closes the file. Only DC, Admin, CMO Punjab, or the Minister can reopen it. The citizen will see it as closed.',
+      okLabel:'Force close', cancelLabel:'Cancel', danger:true
+    });
+    if (!ok) return;
+    const list = DB.get('complaints'); const c = list.find(x => x.appNo === appNo);
+    c.status = STATUS.CLOSED; c.forceClosed = true;
+    c.timeline.push({ status: STATUS.CLOSED, note: `Grievance force-closed by administrative order.`, by: `${me.title} ${me.name}`, at: Date.now() });
+    DB.set('complaints', list);
+    openC(appNo); renderAll();
+    toast('Grievance force-closed.', 'bad');
+  };
+  window.reopenFile = async function(appNo){
+    const ok = await confirmDialog({
+      icon:'🔓', title:'Reopen this grievance?',
+      message: 'The file returns to its original department officer for fresh action.',
+      okLabel:'Reopen', cancelLabel:'Cancel'
+    });
+    if (!ok) return;
+    const list = DB.get('complaints'); const c = list.find(x => x.appNo === appNo);
+    c.forceClosed = false; c.status = STATUS.REOPENED;
+    if (c.dept !== 'mc-office') {
+      const fl = frontLineOfficer(c.dept);
+      c.currentOfficerId = fl ? fl.id : c.currentOfficerId;
+      c.level = fl ? fl.rank : c.level;
+    }
+    c.levelStartedAt = Date.now(); c.escalated = false;
+    c.timeline.push({ status: STATUS.REOPENED, note: `Force-closed file reopened by ${me.title} ${me.name} for further action.`, by: `${me.title} ${me.name}`, at: Date.now() });
+    DB.set('complaints', list);
+    openC(appNo); renderAll();
+    toast('Grievance reopened.');
+  };
+  window.cmoUrgentForward = async function(appNo){
+    const autoBan = document.getElementById('cmoAutoBanCk').checked;
+    const ok = await confirmDialog({
+      icon:'🚨', title:'Send urgent referral?',
+      message: `This immediately reassigns the file to the department's senior-most officer with an urgent flag${autoBan ? ', and will suspend their account automatically if they fail to act in time' : ''}.`,
+      okLabel:'Send referral', cancelLabel:'Cancel', danger:true
+    });
+    if (!ok) return;
+    const list = DB.get('complaints'); const c = list.find(x => x.appNo === appNo);
+    const top = topOfficerOfDept(c.dept);
+    c.currentOfficerId = top.id; c.level = top.rank; c.levelStartedAt = Date.now();
+    c.urgentFromCMO = true; c.cmoAutoBan = autoBan; c.urgentFromRole = meta.badge;
+    c.timeline.push({
+      status: 'Escalated',
+      note: `🚨 Urgent referral by ${meta.badge} to ${top.name} (${top.designation}) — immediate action required.` + (autoBan ? ' Account will be suspended automatically for inaction.' : ''),
+      by: meta.badge, at: Date.now()
+    });
+    DB.set('complaints', list);
+    systemAlert('dc', `${meta.badge} referred grievance ${c.appNo} directly to ${deptById(c.dept).name}.`, c.appNo);
+    openC(appNo); renderAll();
+    toast('Urgent referral sent. The Deputy Commissioner has been notified.', 'bad');
+  };
+  window.closeModal = () => document.getElementById('modalBg').classList.remove('open');
+  document.getElementById('modalBg').addEventListener('click', e => { if (e.target.id==='modalBg') closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+
+  function renderAll(){
+    // Each section renders independently — one throwing never blanks the rest.
+    [renderOverview, renderList, renderDepartments, renderWards, renderCredentials, renderSettings, renderPeople, renderDeptManage, renderAuthProfile]
+      .forEach(fn => { try { fn(); } catch (err) { console.error('Saarthi render error in', fn.name, err); } });
+  }
+
+  /* ---------- My profile (every authority role; Admin gets self-service password change) ---------- */
+  function renderAuthProfile(){
+    document.getElementById('authProfileKV').innerHTML = `
+      <dt>Name</dt><dd><b>${me.name}</b></dd>
+      <dt>Role</dt><dd>${meta.badge}</dd>
+      <dt>Scope</dt><dd>${meta.sub}</dd>`;
+    document.getElementById('adminPwPanel').style.display = me.role === 'admin' ? 'block' : 'none';
+  }
+  if (me.role === 'admin') {
+    document.getElementById('adminPwForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const cur = document.getElementById('curPw').value, nw = document.getElementById('newPw').value, cf = document.getElementById('confirmPw').value;
+      const list = DB.get('authorities'); const a = list.find(x => x.role === 'admin');
+      if (a.password !== cur) return toast('Current password is incorrect.', 'bad');
+      if (nw.length < 6) return toast('New password must be at least 6 characters.', 'bad');
+      if (nw !== cf) return toast('New password and confirmation do not match.', 'bad');
+      a.password = nw; DB.set('authorities', list);
+      e.target.reset();
+      toast('Your password has been updated. Use it next time you sign in.');
+    });
+  }
+
+  /* ---------- Credentials management (admin & dc) ---------- */
+  let credView = 'officers';
+  document.getElementById('credOfficers').addEventListener('click', () => { credView='officers';
+    document.getElementById('credOfficers').classList.add('on'); document.getElementById('credMCs').classList.remove('on'); document.getElementById('credAuth').classList.remove('on'); renderCredentials(); });
+  document.getElementById('credMCs').addEventListener('click', () => { credView='mcs';
+    document.getElementById('credMCs').classList.add('on'); document.getElementById('credOfficers').classList.remove('on'); document.getElementById('credAuth').classList.remove('on'); renderCredentials(); });
+  document.getElementById('credAuth').addEventListener('click', () => { credView='auth';
+    document.getElementById('credAuth').classList.add('on'); document.getElementById('credOfficers').classList.remove('on'); document.getElementById('credMCs').classList.remove('on'); renderCredentials(); });
+  if (me.role === 'admin') document.getElementById('credAuth').hidden = false;
+
+  function renderCredentials(){
+    if (!['admin','dc','cmo','minister'].includes(me.role)) return;
+    const area = document.getElementById('credArea');
+    if (credView === 'officers') {
+      const byDept = {};
+      DB.get('officers').forEach(o => { (byDept[o.dept] = byDept[o.dept] || []).push(o); });
+      Object.values(byDept).forEach(arr => arr.sort((a,b) => (a.rank||9) - (b.rank||9)));
+      area.innerHTML = Object.entries(byDept).map(([deptId, officers]) => {
+        const d = deptById(deptId);
+        return `<div class="panel" style="margin-bottom:1rem">
+          <div class="p-head"><h3>${d ? d.ico + ' ' + d.name : deptId}</h3><span class="sub">${officers.length} in hierarchy</span></div>
+          ` + officers.map(o => `<div class="cred-row" style="flex-direction:column;align-items:stretch">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+              <div class="who"><b>${o.blocked ? '🚫 ' : ''}${o.name}</b><span>Rank ${o.rank||1} · ${o.designation}${o.office ? ' · ' + o.office : ''} · 📞 ${o.phone}${o.blocked ? ' · BLOCKED' : ''}</span></div>
+              <div style="display:flex;gap:.5rem">
+                <button class="btn btn-outline btn-sm" onclick="toggleEdit('off-${o.id}')">✏️ Edit</button>
+                <button class="btn ${o.blocked ? 'btn-pine' : 'btn-danger'} btn-sm" onclick="toggleBlockOfficer('${o.id}')" ${o.blocked && o.blockedByCMO && ['dc','minister'].includes(me.role) ? 'disabled title="Only CMO Punjab or System Admin can restore this account"' : ''}>${o.blocked ? '✔ Unblock' : '🚫 Block'}</button>
+              </div>
+            </div>
+            <div id="edit-off-${o.id}" style="display:none;margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--line)">
+              <div class="form-grid">
+                <div class="field"><label>Officer name</label><input id="edn-off-${o.id}" value="${o.name}"></div>
+                <div class="field"><label>Designation</label><input id="edd-off-${o.id}" value="${o.designation}"></div>
+                <div class="field"><label>Contact number</label><input id="edp-off-${o.id}" maxlength="10" value="${o.phone}"></div>
+                <div class="field"><label>Hierarchy rank</label><input id="edr-off-${o.id}" type="number" min="1" value="${o.rank||1}">
+                  <div class="hint">1 = first point of contact (front-line). Higher numbers are more senior — used for escalation.</div></div>
+                <div class="field full"><label>Office address</label><input id="edo-off-${o.id}" value="${o.office || ''}"></div>
+              </div>
+              <button class="btn btn-pine btn-sm" onclick="saveOfficerDetails('${o.id}')">Save details</button>
+            </div>
+            <div class="pwbox" style="margin-top:.7rem">
+              <input type="text" id="pw-off-${o.id}" placeholder="New password" minlength="6">
+              <button class="btn btn-outline btn-sm" onclick="resetOfficerPw('${o.id}')">Set password</button>
+            </div></div>`).join('') + `</div>`;
+      }).join('');
+    } else if (credView === 'mcs') {
+      const mcs = DB.get('mcs');
+      area.innerHTML = `<div class="panel">` + mcs.map(m => `<div class="cred-row" style="flex-direction:column;align-items:stretch">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+            <div class="who"><b>${m.blocked ? '🚫 ' : '🤝 '}${m.name}</b><span>Ward ${m.ward} Councillor${m.office ? ' · ' + m.office : ''} · 📞 ${m.phone}${m.blocked ? ' · BLOCKED' : ''}</span></div>
+            <div style="display:flex;gap:.5rem">
+              <button class="btn btn-outline btn-sm" onclick="toggleEdit('mc-${m.ward}')">✏️ Edit details</button>
+              ${['admin','cmo','minister'].includes(me.role) ? `<button class="btn ${m.blocked ? 'btn-pine' : 'btn-danger'} btn-sm" onclick="toggleBlockMC(${m.ward})">${m.blocked ? '✔ Unblock' : '🚫 Block'}</button>` : ''}
+            </div>
+          </div>
+          <div id="edit-mc-${m.ward}" style="display:none;margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--line)">
+            <div class="form-grid">
+              <div class="field"><label>Councillor name</label><input id="edn-mc-${m.ward}" value="${m.name}"></div>
+              <div class="field"><label>Contact number</label><input id="edp-mc-${m.ward}" maxlength="10" value="${m.phone}"></div>
+              <div class="field"><label>Ward number</label>
+                <select id="edw-mc-${m.ward}">${WARDS.map(w => `<option value="${w.ward}" ${w.ward===m.ward?'selected':''}>Ward ${w.ward}</option>`).join('')}</select>
+                <div class="hint">Use this only after an election result changes which ward a councillor represents.</div></div>
+              <div class="field full"><label>Office address</label><input id="edo-mc-${m.ward}" value="${m.office || ''}"></div>
+            </div>
+            <button class="btn btn-pine btn-sm" onclick="saveMCDetails(${m.ward})">Save details</button>
+          </div>
+          <div class="pwbox" style="margin-top:.7rem">
+            <input type="text" id="pw-mc-${m.ward}" placeholder="New password" minlength="6">
+            <button class="btn btn-outline btn-sm" onclick="resetMCPw(${m.ward})">Set password</button>
+          </div></div>`).join('') + `</div>`;
+    } else if (credView === 'auth') {
+      if (me.role !== 'admin') { area.innerHTML = ''; return; }
+      const auths = DB.get('authorities').filter(a => a.role !== 'admin'); // admin's own password lives in My Profile
+      area.innerHTML = `<div class="panel">` + auths.map(a => `<div class="cred-row">
+          <div class="who"><b>${a.name}</b><span>${a.title}</span></div>
+          <div class="pwbox">
+            <input type="text" id="pw-auth-${a.role}" placeholder="New password" minlength="6">
+            <button class="btn btn-outline btn-sm" onclick="resetAuthPw('${a.role}')">Set password</button>
+          </div></div>`).join('') + `</div>`;
+    }
+  }
+  window.resetAuthPw = function(role){
+    const input = document.getElementById('pw-auth-' + role);
+    const pw = input.value.trim();
+    if (pw.length < 6) return toast('Password must be at least 6 characters.', 'bad');
+    const list = DB.get('authorities'); const a = list.find(x => x.role === role);
+    a.password = pw; DB.set('authorities', list); input.value = '';
+    toast(`Password updated for ${a.name}.`);
+  };
+  window.toggleEdit = id => {
+    const el = document.getElementById('edit-' + id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  };
+  window.saveOfficerDetails = function(officerId){
+    const name = document.getElementById('edn-off-' + officerId).value.trim();
+    const designation = document.getElementById('edd-off-' + officerId).value.trim();
+    const phone = document.getElementById('edp-off-' + officerId).value.trim();
+    const office = document.getElementById('edo-off-' + officerId).value.trim();
+    const rank = Number(document.getElementById('edr-off-' + officerId).value) || 1;
+    if (name.length < 3) return toast('Enter a valid officer name.', 'bad');
+    if (!/^[6-9]\d{9}$/.test(phone)) return toast('Enter a valid 10-digit contact number.', 'bad');
+    const list = DB.get('officers'); const o = list.find(x => x.id === officerId);
+    o.name = name; o.designation = designation; o.phone = phone; o.office = office; o.rank = rank;
+    DB.set('officers', list);
+    toast(`Details updated for ${name}.`);
+    renderCredentials();
+  };
+  window.resetOfficerPw = function(officerId){
+    const input = document.getElementById('pw-off-' + officerId);
+    const pw = input.value.trim();
+    if (pw.length < 6) return toast('Password must be at least 6 characters.', 'bad');
+    const list = DB.get('officers'); const o = list.find(x => x.id === officerId);
+    o.password = pw; DB.set('officers', list); input.value = '';
+    toast(`Password updated for ${o.name}.`);
+  };
+  window.toggleBlockOfficer = async function(officerId){
+    const list = DB.get('officers'); const o = list.find(x => x.id === officerId);
+    if (o.blocked && o.blockedByCMO && ['dc','minister'].includes(me.role)) {
+      toast('This account was suspended by CMO Punjab order — only CMO Punjab or the System Administrator can restore it.', 'bad'); // Minister is intentionally excluded here — see blockedByCMO gating above
+      return;
+    }
+    const action = o.blocked ? 'unblock' : 'block';
+    const ok = await confirmDialog({
+      icon: o.blocked ? '✔️' : '🚫', title: `${action === 'block' ? 'Block' : 'Unblock'} this officer's account?`,
+      message: action === 'block'
+        ? `${o.name} will immediately lose access to their dashboard until unblocked.`
+        : `${o.name} will regain access to their dashboard.`,
+      okLabel: action === 'block' ? 'Block account' : 'Unblock account', cancelLabel: 'Cancel', danger: action === 'block'
+    });
+    if (!ok) return;
+    o.blocked = !o.blocked; if (!o.blocked) o.blockedByCMO = false; DB.set('officers', list);
+    toast(`${o.name} has been ${o.blocked ? 'blocked' : 'unblocked'}.`, o.blocked ? 'bad' : 'ok');
+    renderCredentials();
+  };
+  window.toggleBlockMC = async function(ward){
+    if (!['admin','cmo','minister'].includes(me.role)) return;
+    const list = DB.get('mcs'); const m = list.find(x => x.ward === ward);
+    const action = m.blocked ? 'unblock' : 'block';
+    const ok = await confirmDialog({
+      icon: m.blocked ? '✔️' : '🚫', title: `${action === 'block' ? 'Block' : 'Unblock'} this councillor's account?`,
+      message: action === 'block' ? `${m.name} will immediately lose access to their dashboard.` : `${m.name} will regain access.`,
+      okLabel: action === 'block' ? 'Block account' : 'Unblock account', cancelLabel: 'Cancel', danger: action === 'block'
+    });
+    if (!ok) return;
+    m.blocked = !m.blocked; DB.set('mcs', list);
+    toast(`${m.name} has been ${m.blocked ? 'blocked' : 'unblocked'}.`, m.blocked ? 'bad' : 'ok');
+    renderCredentials();
+  };
+  window.saveMCDetails = function(currentWard){
+    const name = document.getElementById('edn-mc-' + currentWard).value.trim();
+    const phone = document.getElementById('edp-mc-' + currentWard).value.trim();
+    const office = document.getElementById('edo-mc-' + currentWard).value.trim();
+    const newWard = Number(document.getElementById('edw-mc-' + currentWard).value);
+    if (name.length < 3) return toast('Enter a valid councillor name.', 'bad');
+    if (!/^[6-9]\d{9}$/.test(phone)) return toast('Enter a valid 10-digit contact number.', 'bad');
+    const list = DB.get('mcs');
+    if (newWard !== currentWard && list.some(m => m.ward === newWard)) {
+      return toast(`Ward ${newWard} already has a councillor on record. Reassign or remove that one first.`, 'bad');
+    }
+    const m = list.find(x => x.ward === currentWard);
+    m.name = name; m.phone = phone; m.office = office; m.ward = newWard;
+    DB.set('mcs', list);
+    toast(`Details updated for ${name} (Ward ${newWard}).`);
+    renderCredentials();
+  };
+  window.resetMCPw = function(ward){
+    const input = document.getElementById('pw-mc-' + ward);
+    const pw = input.value.trim();
+    if (pw.length < 6) return toast('Password must be at least 6 characters.', 'bad');
+    const list = DB.get('mcs'); const m = list.find(x => x.ward === ward);
+    m.password = pw; DB.set('mcs', list); input.value = '';
+    toast(`Password updated for ${m.name} (Ward ${ward}).`);
+  };
+
+  /* ---------- Notification settings (admin & dc) ---------- */
+  function renderSettings(){
+    if (!['admin','dc','cmo','minister'].includes(me.role)) return;
+    const s = notifySettings();
+    const toggle = document.getElementById('notifyToggle');
+    toggle.checked = s.enabled;
+    toggle.addEventListener('change', () => {
+      setNotifySettings({ enabled: toggle.checked });
+      toast(toggle.checked ? 'Notifications turned ON for all citizens.' : 'Notifications turned OFF for all citizens.', toggle.checked ? 'ok' : 'bad');
+    });
+    const log = DB.get('notifications').sort((a,b) => b.at - a.at).slice(0, 25);
+    document.getElementById('notifCount').textContent = `${DB.get('notifications').length} total sent`;
+    document.getElementById('notifLog').innerHTML = log.length
+      ? log.map(n => `<div class="log-row"><div class="li">${n.sent ? '📧' : '🚫'}</div>
+          <div style="flex:1"><b>${n.subject}</b>
+          <div class="lm">To ${n.citizenName} · ${n.email || 'no email'} · 📱 ${n.phone}</div>
+          <div class="lt">${fmt(n.at)} ${n.sent ? '' : '(blocked — notifications were off)'}</div></div></div>`).join('')
+      : `<div class="chart-empty">No notifications sent yet.</div>`;
+    renderMaintenance();
+  }
+
+  /* ---------- Site maintenance kill-switch (admin only) ---------- */
+  function renderMaintenance(){
+    if (me.role !== 'admin') return;
+    document.getElementById('maintenancePanel').style.display = 'block';
+    const m = getMaintenance();
+    document.getElementById('maintToggle').checked = m.enabled;
+    document.getElementById('maintMessage').value = m.message || '';
+    if (m.reopenAt) {
+      const d = new Date(m.reopenAt);
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('maintReopenAt').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } else {
+      document.getElementById('maintReopenAt').value = '';
+    }
+    document.getElementById('maintStatusBadge').textContent = maintenanceActive() ? '🔴 Site is currently OFFLINE' : '🟢 Site is currently live';
+  }
+  // The reopen-time calendar applies with immediate effect the moment it's changed —
+  // no need to press Save just to update the auto-reopen schedule of a site that's
+  // already offline. Turning the site off/on itself still asks for confirmation below.
+  document.getElementById('maintReopenAt').addEventListener('change', () => {
+    const m = getMaintenance();
+    if (!m.enabled) return; // nothing to reschedule if the site isn't currently offline
+    const raw = document.getElementById('maintReopenAt').value;
+    const reopenAt = raw ? new Date(raw).getTime() : null;
+    setMaintenance({ ...m, reopenAt });
+    renderMaintenance();
+    toast(reopenAt ? `Auto-reopen updated to ${new Date(reopenAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})}.` : 'Auto-reopen time cleared — site stays offline until you switch it back on.');
+  });
+  document.getElementById('maintSaveBtn').addEventListener('click', async () => {
+    const enabled = document.getElementById('maintToggle').checked;
+    const message = document.getElementById('maintMessage').value.trim();
+    const reopenRaw = document.getElementById('maintReopenAt').value;
+    const reopenAt = reopenRaw ? new Date(reopenRaw).getTime() : null;
+    if (enabled) {
+      const ok = await confirmDialog({
+        icon:'🛠️', title:'Take the site offline?',
+        message: reopenAt
+          ? `Citizens, officers, and councillors will be locked out until ${new Date(reopenAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})}, when it reopens automatically.`
+          : 'Citizens, officers, and councillors will be locked out until you switch this back on.',
+        okLabel:'Take offline', cancelLabel:'Cancel', danger:true
+      });
+      if (!ok) return;
+    }
+    setMaintenance({ enabled, message, reopenAt });
+    renderMaintenance();
+    toast(enabled ? 'Site is now offline for citizens, officers, and MCs.' : 'Site is live again.', enabled ? 'bad' : 'ok');
+  });
+
+  /* ---------- People directory (item #13, admin & dc) ---------- */
+  document.getElementById('ppWard').innerHTML += WARDS.map(w => `<option value="${w.ward}">Ward ${w.ward}</option>`).join('');
+  let ppView = 'citizens';
+  document.getElementById('ppCitizens').addEventListener('click', () => { ppView='citizens';
+    document.getElementById('ppCitizens').classList.add('on'); document.getElementById('ppOfficers').classList.remove('on'); renderPeople(); });
+  document.getElementById('ppOfficers').addEventListener('click', () => { ppView='officers';
+    document.getElementById('ppOfficers').classList.add('on'); document.getElementById('ppCitizens').classList.remove('on'); renderPeople(); });
+  document.getElementById('ppWard').addEventListener('change', renderPeople);
+  document.getElementById('ppSearch').addEventListener('input', renderPeople);
+
+  function renderPeople(){
+    if (!['admin','dc','cmo','minister'].includes(me.role)) return;
+    const area = document.getElementById('peopleArea');
+    const q = (document.getElementById('ppSearch').value || '').toLowerCase();
+    if (ppView === 'citizens') {
+      const wardFilter = document.getElementById('ppWard').value;
+      const users = DB.get('users')
+        .filter(u => !wardFilter || u.ward === Number(wardFilter))
+        .filter(u => u.name.toLowerCase().includes(q) || u.phone.includes(q))
+        .sort((a,b) => a.ward - b.ward);
+      area.innerHTML = users.length
+        ? `<table class="tbl"><thead><tr><th>${t('thWard')}</th><th>${t('thName')}</th><th>${t('thPhone')}</th><th>${t('thEmail')}</th><th>${t('thProfession')}</th><th>${t('thGender')}</th><th>${t('thStatus')}</th><th></th></tr></thead><tbody>` +
+          users.map(u => `<tr${u.blocked ? ' style="opacity:.6"' : ''}><td>Ward ${u.ward}</td><td><b>${u.name}</b></td><td>${u.phone}</td><td>${u.email||'—'}</td><td>${u.profession||'—'}</td><td>${u.gender||'—'}</td>
+            <td>${u.blocked ? '<span class="badge b-esc">Blocked</span>' : '<span class="badge b-res">Active</span>'}</td>
+            <td>${['admin','cmo','minister'].includes(me.role) ? `<button class="btn ${u.blocked ? 'btn-pine' : 'btn-danger'} btn-sm" onclick="toggleBlockCitizen('${u.id}')">${u.blocked ? 'Unblock' : 'Block'}</button>` : ''}</td></tr>`).join('') + '</tbody></table>'
+        : `<div class="card empty"><div class="big">👥</div><p>No citizens match.</p></div>`;
+    } else {
+      const officers = DB.get('officers').filter(o => o.name.toLowerCase().includes(q) || deptById(o.dept).name.toLowerCase().includes(q));
+      const mcs = DB.get('mcs').filter(m => m.name.toLowerCase().includes(q));
+      area.innerHTML = `
+        <table class="tbl"><thead><tr><th>${t('thName')}</th><th>${t('thRole')}</th><th>${t('thDeptWard')}</th><th>${t('thPhone')}</th></tr></thead><tbody>` +
+        officers.map(o => `<tr><td><b>${o.name}</b></td><td>${o.designation}</td><td>${deptById(o.dept).name}</td><td>${deptById(o.dept).phone}</td></tr>`).join('') +
+        mcs.map(m => `<tr><td><b>${m.name}</b></td><td>Municipal Councillor</td><td>Ward ${m.ward}</td><td>${m.phone}</td></tr>`).join('') +
+        '</tbody></table>';
+    }
+  }
+  window.toggleBlockCitizen = async function(citizenId){
+    if (!['admin','cmo','minister'].includes(me.role)) return;
+    const list = DB.get('users'); const u = list.find(x => x.id === citizenId);
+    const action = u.blocked ? 'unblock' : 'block';
+    const ok = await confirmDialog({
+      icon: u.blocked ? '✔️' : '🚫', title: `${action === 'block' ? 'Block' : 'Unblock'} this citizen's account?`,
+      message: action === 'block' ? `${u.name} will immediately lose access to their dashboard.` : `${u.name} will regain access.`,
+      okLabel: action === 'block' ? 'Block account' : 'Unblock account', cancelLabel: 'Cancel', danger: action === 'block'
+    });
+    if (!ok) return;
+    u.blocked = !u.blocked; DB.set('users', list);
+    toast(`${u.name} has been ${u.blocked ? 'blocked' : 'unblocked'}.`, u.blocked ? 'bad' : 'ok');
+    renderPeople();
+  };
+  window.exportPeopleCSV = function(){
+    if (ppView === 'citizens') {
+      const rows = [['Ward','Name','Phone','Email','Profession','Gender']]
+        .concat(DB.get('users').map(u => [u.ward, `"${u.name}"`, u.phone, u.email||'', u.profession||'', u.gender||'']));
+      const blob = new Blob([rows.map(r=>r.join(',')).join('\n')], { type:'text/csv' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'saarthi-citizens.csv'; a.click();
+    } else {
+      const rows = [['Name','Role','Department/Ward','Phone']]
+        .concat(DB.get('officers').map(o => [`"${o.name}"`, o.designation, deptById(o.dept).name, deptById(o.dept).phone]))
+        .concat(DB.get('mcs').map(m => [`"${m.name}"`, 'Municipal Councillor', 'Ward ' + m.ward, m.phone]));
+      const blob = new Blob([rows.map(r=>r.join(',')).join('\n')], { type:'text/csv' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'saarthi-officials.csv'; a.click();
+    }
+    toast('Downloaded people directory as CSV.');
+  };
+
+  /* ---------- Manage departments & hierarchy (admin only) ---------- */
+  function renderDeptManage(){
+    if (!['admin','dc','cmo','minister'].includes(me.role)) return;
+    const isAdmin = me.role === 'admin';
+    document.getElementById('deptFormsPanel').style.display = isAdmin ? 'grid' : 'none';
+    document.getElementById('deptManageSub').textContent = isAdmin
+      ? 'Create new departments and build officer hierarchy — no code changes required.'
+      : 'Read-only view of every department and its officer hierarchy.';
+    if (isAdmin) document.getElementById('aoDept').innerHTML = allDepartments().map(d => `<option value="${d.id}">${d.ico} ${d.name}</option>`).join('');
+    const depts = allDepartments();
+    document.getElementById('deptCount').textContent = `${depts.length} departments`;
+    document.getElementById('deptHierarchy').innerHTML = depts.map(d => {
+      const officers = officersByDept(d.id);
+      return `<div style="margin-bottom:1.1rem;padding-bottom:1.1rem;border-bottom:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem">
+          <b style="font-size:.95rem">${d.ico} ${d.name}</b>
+          ${d.emergency ? '<span class="badge b-esc">24h emergency SLA</span>' : `<span class="badge b-sub">${d.slaHours||36}h SLA</span>`}
+        </div>
+        <div class="pipe-mini">${officers.map(o => `<span>Rank ${o.rank||1}: ${o.name} (${o.designation})</span>`).join('')}</div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('newDeptForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('ndName').value.trim();
+    const ico = document.getElementById('ndIco').value.trim() || '🏢';
+    const designation = document.getElementById('ndDesignation').value.trim();
+    const officerName = document.getElementById('ndOffName').value.trim();
+    const officerPhone = document.getElementById('ndOffPhone').value.trim();
+    const office = document.getElementById('ndOffice').value.trim();
+    const emergency = document.getElementById('ndEmergency').checked;
+    if (name.length < 3) return toast('Enter a department name.', 'bad');
+    if (designation.length < 2) return toast("Enter the head officer's designation.", 'bad');
+    if (officerName.length < 3) return toast("Enter the head officer's name.", 'bad');
+    if (!/^[6-9]\d{9}$/.test(officerPhone)) return toast('Enter a valid 10-digit contact number.', 'bad');
+    const { dept } = addDepartment({ name, ico, designation, emergency, officerName, officerPhone, office });
+    toast(`Department "${dept.name}" created with ${officerName} as ${designation}. Officer password: officer@123`);
+    e.target.reset();
+    renderAll();
+  });
+
+  document.getElementById('addOfficerForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const dept = document.getElementById('aoDept').value;
+    const name = document.getElementById('aoName').value.trim();
+    const designation = document.getElementById('aoDesignation').value.trim();
+    const phone = document.getElementById('aoPhone').value.trim();
+    const rank = Number(document.getElementById('aoRank').value) || 2;
+    const office = document.getElementById('aoOffice').value.trim();
+    if (name.length < 3) return toast('Enter the officer\'s name.', 'bad');
+    if (designation.length < 2) return toast('Enter the designation.', 'bad');
+    if (!/^[6-9]\d{9}$/.test(phone)) return toast('Enter a valid 10-digit contact number.', 'bad');
+    addOfficerToDept({ dept, designation, name, phone, office, rank });
+    toast(`${name} added to ${deptById(dept).name} hierarchy. Password: officer@123`);
+    e.target.reset();
+    renderAll();
+  });
+
+  // Called last, after every render function and every let/const it depends on
+  // (credView, ppView, etc.) has already been declared above — calling this any
+  // earlier throws a temporal-dead-zone error that silently aborts the rest of
+  // renderAll(), which is exactly what left Credentials and People directory blank.
+  // Expose renderAll globally so the language switcher (wired at the top of this
+  // script, before this block existed) can trigger an in-place re-render instead
+  // of a full page reload when the language changes.
+  window.__renderAuthority = renderAll;
+  renderAll();
+}
+</script>
+</body>
+</html>

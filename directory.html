@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Department Directory · Saarthi</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<script>document.documentElement.dataset.theme=localStorage.getItem("saarthi_theme")||"light";</script>
+<div id="gov"></div>
+<header class="site-head"><div class="wrap">
+  <a href="index.html" style="display:flex;align-items:center;gap:1rem">
+    <div class="emblem">ਸ</div>
+    <div class="brand"><h1>Saarthi</h1><p>Civic Grievance Portal · Govt. of Punjab</p></div>
+  </a>
+  <div class="head-actions">
+    <button class="iconbtn" id="themeBtn" title="Toggle theme">🌙</button>
+    <a class="btn btn-ghost" href="login.html">Sign in</a>
+    <a class="btn btn-gold" href="signup.html">Register</a>
+  </div>
+</div></header>
+
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Public information · No sign-in required</p>
+    <h2 class="title">Department &amp; Officer Directory</h2>
+    <p style="color:var(--muted);font-size:.92rem;max-width:640px;margin-bottom:1.6rem">
+      Every civic department serving Rajpura, its designated officers, their hierarchy, and office address — published for public accountability.
+    </p>
+    <div class="filter-bar">
+      <input id="dirSearch" placeholder="Search department, officer, or designation" style="min-width:280px">
+    </div>
+    <div id="dirArea"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><h4>Saarthi</h4><p>An initiative of the Department of Local Government, Punjab.</p></div>
+    <div><h4>Quick links</h4><p><a href="index.html">Portal home</a><br><a href="signup.html">Citizen registration</a></p></div>
+    <div><h4>Contact</h4><p>Municipal Council, Rajpura<br>District Patiala, Punjab<br>Helpline: 1100</p></div>
+  </div>
+  <div class="base">© 2026 Government of Punjab · Built for Backend Engineering (24CAI0303)</div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>if (maintenanceGate()) { throw new Error("maintenance"); }</script>
+<script>
+document.getElementById('gov').innerHTML = govStrip();
+const themeBtn = document.getElementById('themeBtn');
+const applyTheme = t => { document.documentElement.dataset.theme = t; themeBtn.textContent = t === 'dark' ? '☀️' : '🌙'; localStorage.setItem('saarthi_theme', t); };
+applyTheme(localStorage.getItem('saarthi_theme') || 'light');
+themeBtn.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+function render(){
+  const q = (document.getElementById('dirSearch').value || '').toLowerCase();
+  const depts = allDepartments().filter(d =>
+    !q || d.name.toLowerCase().includes(q) ||
+    officersByDept(d.id).some(o => o.name.toLowerCase().includes(q) || o.designation.toLowerCase().includes(q)));
+  document.getElementById('dirArea').innerHTML = depts.length ? depts.map(d => {
+    const officers = officersByDept(d.id);
+    return `<div class="panel" style="margin-bottom:1rem">
+      <div class="p-head">
+        <h3>${d.ico} ${d.name}</h3>
+        <span class="sub">${d.emergency ? '24-hour emergency service' : `${d.slaHours||36}-hour resolution SLA`}</span>
+      </div>
+      <div class="p-body">
+        ${officers.map(o => `<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.6rem 0;border-bottom:1px solid var(--line);flex-wrap:wrap">
+          <div><b style="font-size:.9rem">${o.name}</b><br><span style="font-size:.78rem;color:var(--muted)">${o.designation} · Rank ${o.rank||1}</span></div>
+          <div style="text-align:right;font-size:.82rem"><div>📞 ${o.phone}</div><div style="color:var(--muted)">${o.office || 'Office address not on file'}</div></div>
+        </div>`).join('') || `<p style="font-size:.85rem;color:var(--muted)">No officer currently on record.</p>`}
+      </div>
+    </div>`;
+  }).join('') : `<div class="card empty"><p>No matches.</p></div>`;
+}
+document.getElementById('dirSearch').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
