@@ -114,7 +114,7 @@ button {
 
 .govstrip .pa {
   font-family: var(--font-pa);
-  color: #fff
+  color: #f31d1d
 }
 
 .wrap {
@@ -124,7 +124,7 @@ button {
 
 /* ---------- Header (white, official) ---------- */
 .site-head {
-  background: #fff;
+  background: #c02121;
   color: var(--ink);
   position: sticky;
   top: 0;
