@@ -6,7 +6,6 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<<<<<<< HEAD
 <script>document.documentElement.dataset.theme=localStorage.getItem("saarthi_theme_v2")||"light";</script>
 
 <header class="site-head">
@@ -18,7 +17,8 @@
         </div>
         <div class="logo-lines">
           <span class="line-or"></span>
-          
+          <span class="dot-bl"></span>
+          <span class="line-gr"></span>
         </div>
         <span class="logo-sub" data-i18n="tagline">One Nation — One Portal</span>
       </div>
@@ -34,18 +34,6 @@
 
     <div class="head-actions">
       <div class="wrap-rel langsw">
-=======
-<script>document.documentElement.dataset.theme=localStorage.getItem("saarthi_theme")||"light";</script>
-
-<div id="gov"></div>
-
-<header class="site-head">
-  <div class="wrap">
-    <div class="emblem">ਸ</div>
-    <div class="brand"><h1>Saarthi</h1><p data-i18n="tagline">Civic Grievance Portal · Govt. of Punjab</p></div>
-    <div class="head-actions">
-      <div class="langsw">
->>>>>>> origin/Shehjeet-Singh
         <button id="langBtn">🌐 <span id="langCur">EN</span></button>
         <div class="lang-menu" id="langMenu">
           <button class="lang-opt" data-lang="en">🇬🇧 English</button>
@@ -54,13 +42,8 @@
         </div>
       </div>
       <button class="iconbtn" id="themeBtn" title="Toggle theme">🌙</button>
-<<<<<<< HEAD
       <a class="btn btn-ghost" href="login.html" data-i18n="signin">Log In</a>
       <a class="btn btn-gold" href="signup.html" data-i18n="register">Sign Up</a>
-=======
-      <a class="btn btn-ghost" href="login.html" data-i18n="signin">Sign in</a>
-      <a class="btn btn-gold" href="signup.html" data-i18n="register">Register</a>
->>>>>>> origin/Shehjeet-Singh
     </div>
   </div>
 </header>
@@ -76,27 +59,22 @@
   <span data-i18n="tick4">🤝 Write directly to your Municipal Councillor from your dashboard</span>
 </div></div>
 
-<<<<<<< HEAD
 <section class="hero hero-compact" id="grievance-map">
-=======
-<section class="hero hero-compact">
->>>>>>> origin/Shehjeet-Singh
   <div class="wrap">
     <div class="hero-copy">
       <span class="hero-eyebrow" data-i18n="heroEyebrow">Service · Transparency · Accountability</span>
       <h2><span data-i18n="heroTitle1">One window for every</span><br><em data-i18n="heroTitleEm">civic grievance</em> <span data-i18n="heroTitle2">in Punjab.</span></h2>
       <p class="sub" data-i18n="heroSub">Report civic issues directly to the responsible officer. Track your file live. Resolution within 36 hours — or it escalates automatically.</p>
-      <div class="hero-cta">
+      <!-- <div class="hero-cta">
         <a class="btn btn-gold btn-lg" href="signup.html" data-i18n="fileGrievance">File a grievance →</a>
         <a class="btn btn-ghost btn-lg" href="login.html?role=officer" data-i18n="officerSignin">Officer / MC sign in</a>
-      </div>
+      </div> -->
       <div class="hero-trust">
         <div><b id="cD">11</b><span data-i18n="kpiDept">departments</span></div>
         <div><b id="cW">20</b><span data-i18n="kpiWard">wards</span></div>
         <div><b>36h</b><span data-i18n="kpiSla">SLA</span></div>
         <div><b id="cT">0</b><span data-i18n="statsFiled">filed</span></div>
       </div>
-<<<<<<< HEAD
 
       <div class="tracker-card">
         <div class="tracker-header">
@@ -113,8 +91,6 @@
         <p class="tracker-privacy">For your privacy, we verify the complainant's registered mobile number before showing any details.</p>
         <div id="trackResult"></div>
       </div>
-=======
->>>>>>> origin/Shehjeet-Singh
     </div>
 
     <div class="hero-right">
@@ -122,20 +98,7 @@
         <div class="map-chip chip-1"><span class="dot"></span> <span data-i18n="chipLive">Live in District Patiala</span></div>
         <img src="assets/punjab-districts.png" alt="District map of Punjab">
         <div class="map-chip chip-2">📍 <span data-i18n="chipRajpura">Rajpura · 20 wards onboard</span></div>
-<<<<<<< HEAD
         <div class="map-sub">State of Punjab · 23 Districts</div>
-=======
-      </div>
-      <div class="tracker-card glass">
-        <h3 data-i18n="trackTitle">Track a grievance</h3>
-        <form id="trackForm" style="display:flex;flex-direction:column;gap:.5rem">
-          <input id="trackNo" maxlength="10" placeholder="26XX000000" inputmode="numeric" style="margin-bottom:.5rem">
-          <input id="trackPhone" maxlength="10" inputmode="numeric" placeholder="Registered mobile number" style="margin-bottom:.5rem">
-          <button class="btn btn-gold" type="submit" data-i18n="track">Track</button>
-        </form>
-        <p style="font-size:.72rem;color:var(--muted);margin-top:.4rem">For your privacy, enter the complainant's registered mobile number to verify identity before details are shown.</p>
-        <div id="trackResult"></div>
->>>>>>> origin/Shehjeet-Singh
       </div>
     </div>
   </div>
@@ -147,7 +110,6 @@
   <span data-i18n="trustFree">🆓 Free for every citizen, always</span>
 </div>
 
-<<<<<<< HEAD
 <section class="section compact" id="departments">
   <div class="wrap">
     <p class="eyebrow" data-i18n="whoHandles2">One portal, every department</p>
@@ -181,23 +143,6 @@
         <h4 data-i18n="step4t">Resolved in 36h</h4>
         <p data-i18n="step4d">Or the file auto-escalates to the higher official. You rate the work, or reopen it.</p>
       </div>
-=======
-<section class="section compact">
-  <div class="wrap">
-    <p class="eyebrow" data-i18n="whoHandles2">One portal, every department</p>
-    <div class="dept-strip" id="deptGrid"></div>
-  </div>
-</section>
-
-<section class="section compact" style="background:#fff;border-block:1px solid var(--line)">
-  <div class="wrap">
-    <p class="eyebrow" data-i18n="promise">The Saarthi promise</p>
-    <div class="grid-4">
-      <div class="card step-card reveal"><b data-i18n="step1t">1 · File it</b><p data-i18n="step1d">Describe the issue, pin it on the map, attach a photo, and submit for an instant application number.</p></div>
-      <div class="card step-card reveal"><b data-i18n="step2t">2 · It reaches the desk</b><p data-i18n="step2d">Lands directly on the designated officer's dashboard — DSP, Xen, EO — of the concerned department.</p></div>
-      <div class="card step-card reveal"><b data-i18n="step3t">3 · Officer acts</b><p data-i18n="step3d">The officer reviews, assigns a field officer with contact details, and records every remark on file.</p></div>
-      <div class="card step-card reveal"><b data-i18n="step4t">4 · Resolved in 36h</b><p data-i18n="step4d">Or the file auto-escalates to the higher official. You rate the work, or reopen it.</p></div>
->>>>>>> origin/Shehjeet-Singh
     </div>
   </div>
 </section>
@@ -236,19 +181,11 @@
     <div><h4 data-i18n="quickLinks">Quick links</h4>
       <p><a href="signup.html" data-i18n="navCitizenReg">Citizen registration</a><br>
       <a href="login.html" data-i18n="signin">Sign in</a><br>
-<<<<<<< HEAD
       <a href="login.html?role=mc" data-i18n="tabMC">Councillor sign in</a><br>
       <a href="login.html?role=officer" data-i18n="officerSignin">Officer sign in</a></p></div>
     <div><h4 data-i18n="contact">Contact</h4><p>Municipal Council, Rajpura<br>District Patiala, Punjab<br>Helpline: 1100</p></div>
   </div>
   <div class="base">© 2026 Government of Punjab · Saarthi Civic Grievance Portal</div>
-=======
-      <a href="directory.html">Department &amp; officer directory</a><br>
-      <a href="login.html?role=admin" data-i18n="adminSignin">Administration sign in</a></p></div>
-    <div><h4 data-i18n="contact">Contact</h4><p>Municipal Council, Rajpura<br>District Patiala, Punjab<br>Helpline: 1100</p></div>
-  </div>
-  <div class="base">© 2026 Government of Punjab · Built for Backend Engineering (24CAI0303)</div>
->>>>>>> origin/Shehjeet-Singh
 </footer>
 
 <script src="js/data.js"></script>
@@ -256,7 +193,6 @@
 <script>if (maintenanceGate()) { throw new Error("maintenance"); }</script>
 <script src="js/i18n.js"></script>
 <script>
-<<<<<<< HEAD
 const govEl = document.getElementById('gov');
 if (govEl) govEl.innerHTML = govStrip();
 
@@ -356,18 +292,6 @@ if (langBtn) {
     if (langMenu) langMenu.classList.remove('open');
   });
 }
-=======
-document.getElementById('gov').innerHTML = govStrip();
-initI18nSwitcher();
-// Theme toggle (persists across every page via localStorage)
-const themeBtn = document.getElementById('themeBtn');
-const applyTheme = t => { document.documentElement.dataset.theme = t; themeBtn.textContent = t === 'dark' ? '☀️' : '🌙'; localStorage.setItem('saarthi_theme', t); };
-applyTheme(localStorage.getItem('saarthi_theme') || 'light');
-themeBtn.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
-
-document.getElementById('langBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('langMenu').classList.toggle('open'); });
-document.addEventListener('click', () => document.getElementById('langMenu').classList.remove('open'));
->>>>>>> origin/Shehjeet-Singh
 runEscalations();
 
 const all = DB.get('complaints');
@@ -376,7 +300,6 @@ const countUp = (el, to) => { const t0 = performance.now();
   requestAnimationFrame(tick); };
 countUp(document.getElementById('cT'), all.length);
 
-<<<<<<< HEAD
 const deptImages = {
   'police': 'https://tse1.mm.bing.net/th/id/OIP.-Q48bnv6a554EJCUpJfwgAHaEc?r=0&rs=1&pid=ImgDetMain&o=7&rm=3',
   'fire': 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=400&auto=format&fit=crop&q=80',
@@ -418,10 +341,6 @@ document.getElementById('deptGrid').innerHTML = allDepartments().map(d => {
     `;
   }
 }).join('');
-=======
-document.getElementById('deptGrid').innerHTML = allDepartments().map(d => `
-  <div class="dchip"><span class="ico">${d.ico}</span><span>${d.name}</span></div>`).join('');
->>>>>>> origin/Shehjeet-Singh
 
 const ro = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); ro.unobserve(en.target); } }), { threshold:.2 });
 document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
