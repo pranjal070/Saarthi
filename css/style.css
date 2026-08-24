@@ -218,7 +218,7 @@ button {
   background: var(--sky-bg)
 }
 
-/* .btn-pine {
+.btn-pine {
   background: var(--primary);
   color: #fff
 }
@@ -280,7 +280,7 @@ button {
   padding: .48rem 0;
   width: max-content;
   animation: tick 30s linear infinite
-} */
+}
 
 .ticker-track span {
   display: inline-flex;
