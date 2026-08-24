@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Department Directory · Saarthi</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<script>document.documentElement.dataset.theme=localStorage.getItem("saarthi_theme_v2")||"light";</script>
+<header class="site-head">
+  <div class="wrap">
+    <div class="logo-area">
+      <div class="brand-logo">
+        <div class="logo-txt">
+          <span class="l-or">SAA</span><span class="l-bl">R</span><span class="l-or">T</span><span class="l-gr">HII</span>
+        </div>
+        <div class="logo-lines">
+          <span class="line-or"></span>
+          <span class="dot-bl"></span>
+          <span class="line-gr"></span>
+        </div>
+        <span class="logo-sub" data-i18n="tagline">One Nation — One Portal</span>
+      </div>
+    </div>
+
+    <nav class="nav-links">
+      <a href="index.html" class="nav-item" data-i18n="navHome">Home</a>
+      <a href="index.html#departments" class="nav-item" data-i18n="navDepts">Departments</a>
+      <a href="directory.html" class="nav-item active" data-i18n="navMap">Grievance Map</a>
+      <a href="index.html#how-it-works" class="nav-item" data-i18n="navHow">How it works</a>
+    </nav>
+
+    <div class="head-actions">
+      <a class="btn btn-ghost" href="login.html" data-i18n="signin">Log In</a>
+      <a class="btn btn-gold" href="signup.html" data-i18n="register">Sign Up</a>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Public information · No sign-in required</p>
+    <h2 class="title">Department &amp; Officer Directory</h2>
+    <p style="color:var(--muted);font-size:.92rem;max-width:640px;margin-bottom:1.6rem">
+      Every civic department serving Rajpura, its designated officers, their hierarchy, and office address — published for public accountability.
+    </p>
+    <div class="filter-bar">
+      <input id="dirSearch" placeholder="Search department, officer, or designation" style="min-width:280px">
+    </div>
+    <div id="dirArea"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><h4>Saarthi</h4><p>An initiative of the Department of Local Government, Punjab.</p></div>
+    <div><h4>Quick links</h4><p><a href="index.html">Portal home</a><br><a href="signup.html">Citizen registration</a></p></div>
+    <div><h4>Contact</h4><p>Municipal Council, Rajpura<br>District Patiala, Punjab<br>Helpline: 1100</p></div>
+  </div>
+  <div class="base">© 2026 Government of Punjab · Built for Backend Engineering (24CAI0303)</div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>if (maintenanceGate()) { throw new Error("maintenance"); }</script>
+<script src="js/i18n.js"></script>
+<script>
+const themeBtn = document.getElementById('themeBtn');
+const applyTheme = t => { document.documentElement.dataset.theme = t; if (themeBtn) themeBtn.textContent = t === 'dark' ? '☀️' : '🌙'; localStorage.setItem('saarthi_theme_v2', t); };
+applyTheme(localStorage.getItem('saarthi_theme_v2') || 'light');
+if (themeBtn) themeBtn.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+initI18nSwitcher();
+const langBtn = document.getElementById('langBtn');
+if (langBtn) {
+  langBtn.addEventListener('click', e => { e.stopPropagation(); document.getElementById('langMenu').classList.toggle('open'); });
+  document.addEventListener('click', () => document.getElementById('langMenu')?.classList.remove('open'));
+}
+
+function render(){
+  const q = (document.getElementById('dirSearch').value || '').toLowerCase();
+  const depts = allDepartments().filter(d =>
+    !q || d.name.toLowerCase().includes(q) ||
+    officersByDept(d.id).some(o => o.name.toLowerCase().includes(q) || o.designation.toLowerCase().includes(q)));
+  document.getElementById('dirArea').innerHTML = depts.length ? depts.map(d => {
+    const officers = officersByDept(d.id);
+    return `<div class="panel" style="margin-bottom:1rem">
+      <div class="p-head">
+        <h3>${d.ico} ${d.name}</h3>
+        <span class="sub">${d.emergency ? '24-hour emergency service' : `${d.slaHours||36}-hour resolution SLA`}</span>
+      </div>
+      <div class="p-body">
+        ${officers.map(o => `<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.6rem 0;border-bottom:1px solid var(--line);flex-wrap:wrap">
+          <div><b style="font-size:.9rem">${o.name}</b><br><span style="font-size:.78rem;color:var(--muted)">${o.designation} · Rank ${o.rank||1}</span></div>
+          <div style="text-align:right;font-size:.82rem"><div>📞 ${o.phone}</div><div style="color:var(--muted)">${o.office || 'Office address not on file'}</div></div>
+        </div>`).join('') || `<p style="font-size:.85rem;color:var(--muted)">No officer currently on record.</p>`}
+      </div>
+    </div>`;
+  }).join('') : `<div class="card empty"><p>No matches.</p></div>`;
+}
+document.getElementById('dirSearch').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
