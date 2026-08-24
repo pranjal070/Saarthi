@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Councillor dashboard · Saarthi</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<script>
+// Fix: after signing out, pressing the browser Back button could show this page
+// from the browser's cache without re-checking the session — letting a signed-out
+// person appear to still be inside the dashboard. Force a fresh session check
+// whenever the page is restored from that cache.
+window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
+document.documentElement.dataset.theme=localStorage.getItem("saarthi_theme_v2")||"light";</script>
+<div class="phulkari"></div>
+<div class="dash">
+  <aside class="side">
+    <div class="who"><b id="uName"></b><span id="uMeta"></span></div>
+    <a class="on" data-sec="overview">📊 <span data-i18n="navOverview">Overview</span></a>
+    <a data-sec="residents">👥 <span data-i18n="navResidents">My ward residents</span></a>
+    <a data-sec="profile">👤 <span data-i18n="navProfile">My profile</span></a>
+    <a href="#" onclick="goHome();return false;">🏠 <span data-i18n="navHome">Portal home</span></a>
+    <button class="navlink logout" onclick="confirmSignOut()">↩ <span data-i18n="navSignout">Sign out</span></button>
+  </aside>
+
+  <div>
+    <div class="topbar">
+      <div class="hello"><b id="greet"></b><span id="dateLine"></span></div>
+      <div class="gsearch"><span class="ic">🔍</span><input id="globalSearch" placeholder="Search application no. / subject…"></div>
+      <div class="wrap-rel">
+        <button class="iconbtn" id="bellBtn">🔔<span class="dot-badge" id="bellDot" hidden></span></button>
+        <div class="pop" id="bellPop"><h5>Ward alerts</h5><div id="notifList"></div></div>
+      </div>
+      <div class="wrap-rel langsw">
+        <button id="langBtn">🌐 <span id="langCur">EN</span></button>
+        <div class="lang-menu" id="langMenu">
+          <button class="lang-opt" data-lang="en">🇬🇧 English</button>
+          <button class="lang-opt" data-lang="pa">ਪੰ ਪੰਜਾਬੀ</button>
+          <button class="lang-opt" data-lang="hi">हि हिंदी</button>
+        </div>
+      </div>
+      <button class="iconbtn" id="themeBtn">🌙</button>
+      <div class="wrap-rel">
+        <button class="avatar" id="avaBtn"></button>
+        <div class="pop" id="avaPop" style="width:220px">
+          <h5>Signed in as</h5>
+          <div class="item"><div><div class="t" id="popName"></div><div class="s" id="popMeta"></div></div></div>
+          <div class="item" style="cursor:pointer" onclick="go('profile')">👤 <div class="t">My profile</div></div>
+          <div class="item" style="cursor:pointer;color:var(--danger)" onclick="confirmSignOut()">↩ <div class="t">Sign out</div></div>
+        </div>
+      </div>
+    </div>
+
+    <main class="main">
+      <section class="dash-sec on" id="sec-overview">
+        <h2 class="pg" id="pgTitle"></h2>
+        <p class="pg-sub">Grievances addressed to your office — review and forward them to the right department.</p>
+
+        <div class="grid-4" style="margin-bottom:1.4rem">
+          <div class="card kpi c-blue"><div class="top"><span class="lbl" data-i18n="kpiInbox">In my inbox</span><div class="ic">📨</div></div><b id="stInbox">0</b></div>
+          <div class="card kpi c-amber"><div class="top"><span class="lbl" data-i18n="kpiForwarded">Forwarded by me</span><div class="ic">↪️</div></div><b id="stFwd">0</b></div>
+          <div class="card kpi c-green"><div class="top"><span class="lbl" data-i18n="kpiWardResolved">Ward resolved</span><div class="ic">✅</div></div><b id="stWardDone">0</b></div>
+          <div class="card kpi c-red"><div class="top"><span class="lbl" data-i18n="kpiWardEsc">Ward escalated</span><div class="ic">⚠️</div></div><b id="stWardEsc">0</b></div>
+        </div>
+
+        <div class="split" style="margin-bottom:1.2rem">
+          <div class="panel"><div class="p-head"><h3>Department performance in my ward</h3></div>
+            <div class="p-body" id="mcRows"></div></div>
+          <div class="panel"><div class="p-head"><h3>Grievance mix</h3><span class="sub">By department</span></div>
+            <div class="p-body" id="mcDonut"></div></div>
+        </div>
+
+        <div class="filter-bar">
+          <select id="fView">
+            <option value="inbox">📨 My inbox (addressed to MC)</option>
+            <option value="ward">🏘️ All ward grievances</option>
+          </select>
+        </div>
+        <div id="listArea"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-residents">
+        <h2 class="pg">My ward residents</h2>
+        <p class="pg-sub">Citizens registered on Saarthi from your ward. Aadhaar and Voter ID are never shown here.</p>
+        <div class="grid-4" style="margin-bottom:1.1rem">
+          <div class="card kpi c-blue"><div class="top"><span class="lbl">Registered residents</span><div class="ic">👥</div></div><b id="resTotal">0</b></div>
+        </div>
+        <div class="filter-bar">
+          <input id="resSearch" placeholder="Search by name or phone" data-i18n-ph="searchNamePhone">
+          <button class="btn btn-outline btn-sm" onclick="exportResidentsCSV()" data-i18n="btnExportCSV">⬇️ Export CSV</button>
+        </div>
+        <div id="residentsArea"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-profile">
+        <h2 class="pg">My profile</h2>
+        <p class="pg-sub">Your Municipal Councillor record on Saarthi.</p>
+        <div class="panel" style="max-width:600px"><div class="p-head"><h3>Councillor record</h3></div>
+          <div class="p-body"><dl class="kv" id="profileKV"></dl></div></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="m-head"><h3 id="mTitle"></h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="m-body" id="mBody"></div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>if (maintenanceGate()) { throw new Error("maintenance"); }</script>
+<script src="js/i18n.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/notify.js"></script>
+<script src="js/demo-seed.js"></script>
+<script>
+initI18nSwitcher(() => { if (typeof renderAll === 'function') renderAll(); });
+document.getElementById('langBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('langMenu').classList.toggle('open'); });
+document.addEventListener('click', () => document.querySelectorAll('.pop, .lang-menu').forEach(p => p.classList.remove('open')));
+
+const me = Session.guard('mc'); runEscalations();
+document.getElementById('uName').textContent = me.name;
+document.getElementById('uMeta').textContent = `Municipal Councillor · Ward ${me.ward}, Rajpura`;
+document.getElementById('pgTitle').textContent = `Ward ${me.ward} — Councillor's desk`;
+document.getElementById('avaBtn').textContent = me.name[0];
+document.getElementById('popName').textContent = me.name;
+document.getElementById('popMeta').textContent = `Councillor · Ward ${me.ward}`;
+
+const hr = new Date().getHours();
+document.getElementById('greet').textContent = `${hr < 12 ? t('greetMorning') : hr < 17 ? t('greetAfternoon') : t('greetEvening')}, ${me.name.split(' ')[0]}`;
+document.getElementById('dateLine').textContent = new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+const themeBtn = document.getElementById('themeBtn');
+const applyTheme = t2 => { document.documentElement.dataset.theme = t2; themeBtn.textContent = t2 === 'dark' ? '☀️' : '🌙'; localStorage.setItem('saarthi_theme_v2', t2); };
+applyTheme(localStorage.getItem('saarthi_theme_v2') || 'light');
+themeBtn.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+const toggle = (btn, pop) => btn.addEventListener('click', e => { e.stopPropagation();
+  document.querySelectorAll('.pop').forEach(p => p !== pop && p.classList.remove('open')); pop.classList.toggle('open'); });
+toggle(document.getElementById('bellBtn'), document.getElementById('bellPop'));
+toggle(document.getElementById('avaBtn'), document.getElementById('avaPop'));
+document.querySelectorAll('.pop').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
+
+function go(sec){
+  document.querySelectorAll('.dash-sec').forEach(s => s.classList.toggle('on', s.id === 'sec-' + sec));
+  document.querySelectorAll('.side a[data-sec]').forEach(a => a.classList.toggle('on', a.dataset.sec === sec));
+  document.querySelectorAll('.pop').forEach(p => p.classList.remove('open'));
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+document.querySelectorAll('.side a[data-sec]').forEach(a => a.addEventListener('click', () => go(a.dataset.sec)));
+
+const wardAll = () => DB.get('complaints').filter(c => c.ward === me.ward).sort((a,b) => b.createdAt - a.createdAt);
+
+function render(){
+  const all = wardAll();
+  const inbox = all.filter(c => c.dept === 'mc-office');
+  const done = c => [STATUS.RESOLVED, STATUS.CLOSED].includes(c.status);
+  document.getElementById('stInbox').textContent = inbox.filter(c => !done(c)).length;
+  document.getElementById('stFwd').textContent = all.filter(c => c.forwardedByMC).length;
+  document.getElementById('stWardDone').textContent = all.filter(done).length;
+  document.getElementById('stWardEsc').textContent = all.filter(c => c.escalated && !done(c)).length;
+
+  const rows = Object.entries(all.reduce((a,c) => {
+    const n = deptById(c.dept).name;
+    a[n] = a[n] || { done:0, total:0 }; a[n].total++; if (done(c)) a[n].done++; return a;
+  }, {})).map(([label,v]) => ({ label, ...v })).sort((a,b) => b.total - a.total);
+  document.getElementById('mcRows').innerHTML = progressRows(rows);
+  document.getElementById('mcDonut').innerHTML = donut(rows.map(r => ({ label:r.label, value:r.total })));
+
+  const notifs = inbox.filter(c => !done(c));
+  document.getElementById('bellDot').hidden = !notifs.length;
+  document.getElementById('notifList').innerHTML = notifs.length
+    ? notifs.slice(0,6).map(c => `<div class="item" style="cursor:pointer" onclick="openC('${c.appNo}')"><div>📨</div>
+        <div><div class="t">${c.subject}</div><div class="s">${c.appNo} · ${c.name}</div></div></div>`).join('')
+    : `<div class="item"><div class="s">No new grievances in your inbox.</div></div>`;
+
+  const view = document.getElementById('fView').value;
+  const list = view === 'inbox' ? inbox : all;
+  const area = document.getElementById('listArea');
+  if (!list.length) {
+    area.innerHTML = `<div class="card empty"><div class="big">📭</div><p><b>Nothing here yet.</b><br>${view === 'inbox' ? 'When residents write to your office, their applications appear here.' : 'No grievances have been filed in your ward so far.'}</p></div>`;
+    return;
+  }
+  area.innerHTML = `<table class="tbl"><thead><tr>
+    <th>${t('thAppNo')}</th><th>${t('thSubject')} / Resident</th><th>${t('thWith')}</th><th>${t('thStatus')}</th><th>${t('thSla')}</th><th></th>
+  </tr></thead><tbody>` + list.map(c => `
+    <tr>
+      <td class="mono">${c.appNo}</td>
+      <td><b>${c.subject}</b><br><span style="font-size:.75rem;color:var(--muted)">${c.name} · 📞 ${c.phone} · ${fmt(c.createdAt)}</span></td>
+      <td>${deptById(c.dept).name}${c.forwardedByMC ? '<br><span style="font-size:.7rem;color:var(--primary);font-weight:700">↪ forwarded by you</span>' : ''}</td>
+      <td>${badge(c)}</td>
+      <td>${slaTag(c)}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="openC('${c.appNo}')">Open</button></td>
+    </tr>`).join('') + '</tbody></table>';
+}
+document.getElementById('fView').addEventListener('change', render);
+document.getElementById('globalSearch').addEventListener('input', e => {
+  go('overview');
+  const q = e.target.value.toLowerCase();
+  const area = document.getElementById('listArea');
+  const list = wardAll().filter(c => c.appNo.includes(q) || c.subject.toLowerCase().includes(q));
+  area.innerHTML = list.length ? `<table class="tbl"><thead><tr><th>${t('thAppNo')}</th><th>${t('thSubject')} / Resident</th><th>${t('thWith')}</th><th>${t('thStatus')}</th><th></th></tr></thead><tbody>` +
+    list.map(c => `<tr><td class="mono">${c.appNo}</td><td><b>${c.subject}</b><br><span style="font-size:.75rem;color:var(--muted)">${c.name}</span></td>
+      <td>${deptById(c.dept).name}</td><td>${badge(c)}</td><td><button class="btn btn-outline btn-sm" onclick="openC('${c.appNo}')">Open</button></td></tr>`).join('') + '</tbody></table>'
+    : `<div class="card empty"><p>No matches.</p></div>`;
+});
+
+function openC(appNo){
+  const c = DB.get('complaints').find(x => x.appNo === appNo);
+  document.getElementById('mTitle').textContent = 'File ' + c.appNo;
+  const forward = c.dept === 'mc-office' && ![STATUS.RESOLVED, STATUS.CLOSED].includes(c.status) ? `
+    <div style="border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem">
+      <p style="font-weight:700;font-size:.85rem;margin-bottom:.6rem">Forward to department</p>
+      <div class="field"><label>Concerned department <span class="req">*</span></label>
+        <select id="fwdDept">${allDepartments().map(d => `<option value="${d.id}">${d.ico} ${d.name} — ${d.designation}</option>`).join('')}</select></div>
+      <div class="field"><label>Councillor's note on file</label>
+        <textarea id="fwdNote" rows="2" placeholder="e.g. Verified personally during ward round — kindly treat as urgent."></textarea></div>
+      <button class="btn btn-pine btn-sm" onclick="forwardC('${c.appNo}')">↪ Forward with my recommendation</button>
+    </div>` : '';
+
+  document.getElementById('mBody').innerHTML = `
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">${badge(c)} ${slaTag(c)}</div>
+    <dl class="kv">
+      <dt>Resident</dt><dd><b>${c.name}</b> · 📞 ${c.phone}</dd>
+      <dt>Subject</dt><dd><b>${c.subject}</b></dd>
+      <dt>Description</dt><dd>${c.description}</dd>
+      <dt>Currently with</dt><dd>${deptById(c.dept).name}</dd>
+      <dt>Location</dt><dd>${c.address || 'Ward ' + c.ward + ', Rajpura'}
+        ${c.coords ? `<br><a style="color:var(--primary);font-size:.78rem;font-weight:700" target="_blank" rel="noopener"
+          href="https://www.google.com/maps?q=${c.coords.lat},${c.coords.lng}">📍 View on Google Maps ↗</a>` : ''}</dd>
+    </dl>
+    ${c.photo ? `<p style="font-weight:600;font-size:.85rem;margin:1rem 0 .4rem">Photo evidence</p><img src="${c.photo}" style="max-height:200px;border-radius:10px;border:1px solid var(--line)">` : ''}
+    <p style="font-weight:600;font-size:.85rem;margin:1.2rem 0 .6rem">File movement record</p>
+    <div class="ledger">${ledgerHTML(c)}</div>
+    ${forward}`;
+  document.getElementById('modalBg').classList.add('open');
+}
+window.closeModal = () => document.getElementById('modalBg').classList.remove('open');
+document.getElementById('modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function forwardC(appNo){
+  const deptId = document.getElementById('fwdDept').value;
+  const note = document.getElementById('fwdNote').value.trim();
+  const list = DB.get('complaints'); const c = list.find(x => x.appNo === appNo);
+  const d = deptById(deptId);
+  const frontLine = frontLineOfficer(deptId);
+  c.dept = deptId; c.forwardedByMC = true; c.status = STATUS.SUBMITTED;
+  c.currentOfficerId = frontLine ? frontLine.id : null;
+  c.level = frontLine ? frontLine.rank : null;
+  c.levelStartedAt = Date.now();
+  c.timeline.push({
+    status: 'Forwarded by Councillor',
+    note: `Councillor ${me.name} (Ward ${me.ward}) forwarded this grievance to the ${d.designation}, ${d.name} Department.` + (note ? ` Recommendation: "${note}"` : ''),
+    by: `MC ${me.name}`, at: Date.now()
+  });
+  DB.set('complaints', list);
+  closeModal(); renderAll();
+  toast(`Forwarded to ${d.name} with your recommendation.`);
+}
+
+/* ---------- My ward residents (item #12) ---------- */
+function renderResidents(){
+  const residents = DB.get('users').filter(u => u.ward === me.ward);
+  document.getElementById('resTotal').textContent = residents.length;
+  const q = (document.getElementById('resSearch').value || '').toLowerCase();
+  const filtered = residents.filter(u => u.name.toLowerCase().includes(q) || u.phone.includes(q));
+  const area = document.getElementById('residentsArea');
+  area.innerHTML = filtered.length
+    ? `<table class="tbl"><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Profession</th><th>Address</th></tr></thead><tbody>` +
+      filtered.map(u => `<tr><td><b>${u.name}</b></td><td>${u.phone}</td><td>${u.email || '—'}</td>
+        <td>${u.profession || '—'}</td><td>${u.address || '—'}</td></tr>`).join('') + '</tbody></table>'
+    : `<div class="card empty"><div class="big">👥</div><p>No residents registered from your ward yet.</p></div>`;
+}
+document.getElementById('resSearch').addEventListener('input', renderResidents);
+function exportResidentsCSV(){
+  const residents = DB.get('users').filter(u => u.ward === me.ward);
+  const rows = [['Name','Phone','Email','Profession','Address']].concat(
+    residents.map(u => [`"${u.name}"`, u.phone, u.email||'', u.profession||'', `"${u.address||''}"`]));
+  const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type:'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `saarthi-ward${me.ward}-residents.csv`; a.click();
+  toast('Downloaded ward residents as CSV.');
+}
+
+function renderProfileMC(){
+  document.getElementById('profileKV').innerHTML = `
+    <dt>Name</dt><dd><b>${me.name}</b></dd>
+    <dt>Ward</dt><dd>Ward ${me.ward}, Rajpura</dd>
+    <dt>Contact</dt><dd>${wardByNo(me.ward).phone}</dd>
+    <dt>Office</dt><dd>${wardByNo(me.ward).office}</dd>`;
+}
+
+function renderAll(){ render(); renderResidents(); renderProfileMC(); }
+renderAll();
+</script>
+</body>
+</html>

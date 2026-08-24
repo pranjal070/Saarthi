@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Officer dashboard · Saarthi</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<script>
+// Fix: after signing out, pressing the browser Back button could show this page
+// from the browser's cache without re-checking the session — letting a signed-out
+// person appear to still be inside the dashboard. Force a fresh session check
+// whenever the page is restored from that cache.
+window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
+document.documentElement.dataset.theme=localStorage.getItem("saarthi_theme_v2")||"light";</script>
+<div class="phulkari"></div>
+<div class="dash">
+  <aside class="side">
+    <div class="who"><b id="uName"></b><span id="uMeta"></span></div>
+    <a class="on" data-sec="overview">📊 <span data-i18n="navOverview">Overview</span></a>
+    <a data-sec="queue">🗂️ <span data-i18n="navQueue">Grievance queue</span></a>
+    <a data-sec="analytics">📈 <span data-i18n="navAnalytics">Analytics</span></a>
+    <a data-sec="profile">👤 <span data-i18n="navProfile">My profile</span></a>
+    <a href="#" onclick="goHome();return false;">🏠 <span data-i18n="navHome">Portal home</span></a>
+    <button class="navlink logout" onclick="confirmSignOut()">↩ <span data-i18n="navSignout">Sign out</span></button>
+  </aside>
+
+  <div>
+    <div class="topbar">
+      <div class="hello"><b id="greet"></b><span id="dateLine"></span></div>
+      <div class="gsearch"><span class="ic">🔍</span>
+        <input id="globalSearch" placeholder="Search application no. / subject / complainant…"></div>
+      <div class="wrap-rel">
+        <button class="iconbtn" id="bellBtn">🔔<span class="dot-badge" id="bellDot" hidden></span></button>
+        <div class="pop" id="bellPop"><h5>Files needing action</h5><div id="notifList"></div></div>
+      </div>
+      <div class="wrap-rel langsw">
+        <button id="langBtn">🌐 <span id="langCur">EN</span></button>
+        <div class="lang-menu" id="langMenu">
+          <button class="lang-opt" data-lang="en">🇬🇧 English</button>
+          <button class="lang-opt" data-lang="pa">ਪੰ ਪੰਜਾਬੀ</button>
+          <button class="lang-opt" data-lang="hi">हि हिंदी</button>
+        </div>
+      </div>
+      <button class="iconbtn" id="themeBtn" title="Toggle theme">🌙</button>
+      <div class="wrap-rel">
+        <button class="avatar" id="avaBtn"></button>
+        <div class="pop" id="avaPop" style="width:230px">
+          <h5>Signed in as</h5>
+          <div class="item"><div><div class="t" id="popName"></div><div class="s" id="popMeta"></div></div></div>
+          <div class="item" style="cursor:pointer" onclick="go('profile')">👤 <div class="t">My profile</div></div>
+          <div class="item" style="cursor:pointer" onclick="exportCSV()">⬇️ <div class="t">Export queue (CSV)</div></div>
+          <div class="item" style="cursor:pointer" onclick="window.print()">🖨️ <div class="t">Print this page</div></div>
+          <div class="item" style="cursor:pointer;color:var(--danger)" onclick="confirmSignOut()">↩ <div class="t">Sign out</div></div>
+        </div>
+      </div>
+    </div>
+
+    <main class="main">
+      <!-- OVERVIEW -->
+      <section class="dash-sec on" id="sec-overview">
+        <h2 class="pg" id="deptTitle"></h2>
+        <p class="pg-sub">Every grievance must be disposed of within its department's SLA window. Overdue files auto-escalate up the hierarchy.</p>
+        <div id="urgentBanner"></div>
+
+        <div class="grid-4" style="margin-bottom:1.1rem">
+          <div class="card kpi c-blue"><div class="top"><span class="lbl" data-i18n="kpiTotalReceived">Total received</span><div class="ic">🗂️</div></div><b id="stTotal">0</b><div id="kSpark"></div></div>
+          <div class="card kpi c-amber"><div class="top"><span class="lbl" data-i18n="kpiPending">Pending action</span><div class="ic">⏳</div></div><b id="stPending">0</b><div class="prow-sub" id="stPendingSub"></div></div>
+          <div class="card kpi c-green"><div class="top"><span class="lbl" data-i18n="kpiResolved">Resolved</span><div class="ic">✅</div></div><b id="stDone">0</b><div class="prow-sub" id="stDoneSub"></div></div>
+          <div class="card kpi c-red"><div class="top"><span class="lbl" data-i18n="kpiSlaBreach">SLA breached</span><div class="ic">⚠️</div></div><b id="stBreach">0</b></div>
+        </div>
+
+        <div class="split" style="margin-bottom:1.1rem">
+          <div class="panel"><div class="p-head"><h3>Ward-wise load</h3><span class="sub">Top wards</span></div>
+            <div class="p-body" id="offBars"></div></div>
+          <div class="panel"><div class="p-head"><h3>SLA compliance</h3><span class="sub">Current queue</span></div>
+            <div class="p-body" style="text-align:center" id="offGauge"></div></div>
+        </div>
+
+        <div class="split">
+          <div class="panel"><div class="p-head"><h3>Priority queue</h3><span class="sub">Escalated & due soon</span></div>
+            <div class="p-body" id="priorityList"></div></div>
+          <div class="panel"><div class="p-head"><h3>Recent activity</h3><span class="sub">Your recent actions</span></div>
+            <div class="p-body"><ul class="feed" id="feed"></ul></div></div>
+        </div>
+      </section>
+
+      <!-- QUEUE -->
+      <section class="dash-sec" id="sec-queue">
+        <h2 class="pg">Grievance queue</h2>
+        <p class="pg-sub">Open a file to review, assign a field officer, and record remarks.</p>
+        <div class="filter-bar">
+          <select id="fStatus"><option value="" data-i18n="allStatuses">All statuses</option></select>
+          <select id="fWard"><option value="" data-i18n="allWards">All wards</option></select>
+          <div class="seg-ctl" style="margin-right:auto">
+            <button class="on" id="vTable" data-i18n="viewTable">☰ Table</button>
+            <button id="vCards" data-i18n="viewCards">▦ Cards</button>
+          </div>
+          <input id="fSearch" placeholder="Search application no. / subject" data-i18n-ph="searchAppSubject">
+          <button class="btn btn-outline btn-sm" onclick="exportCSV()" data-i18n="csvShort">⬇️ CSV</button>
+        </div>
+        <div id="listArea"></div>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section class="dash-sec" id="sec-analytics">
+        <h2 class="pg">Department analytics</h2>
+        <p class="pg-sub">Disposal performance across your full grievance history.</p>
+        <div class="split" style="margin-bottom:1.1rem">
+          <div class="panel"><div class="p-head"><h3>Status distribution</h3></div><div class="p-body" id="anDonut"></div></div>
+          <div class="panel"><div class="p-head"><h3>Monthly received vs resolved</h3></div><div class="p-body" id="anBars"></div></div>
+        </div>
+        <div class="panel"><div class="p-head"><h3>Ward-wise breakdown</h3></div><div class="p-body" id="anRows"></div></div>
+      </section>
+
+      <!-- PROFILE -->
+      <section class="dash-sec" id="sec-profile">
+        <h2 class="pg">My profile</h2>
+        <p class="pg-sub">Your designated-officer record on Saarthi.</p>
+        <div class="panel" style="max-width:600px"><div class="p-head"><h3>Officer record</h3></div>
+          <div class="p-body"><dl class="kv" id="profileKV"></dl></div></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="m-head"><h3 id="mTitle"></h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="m-body" id="mBody"></div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>if (maintenanceGate()) { throw new Error("maintenance"); }</script>
+<script src="js/i18n.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/notify.js"></script>
+<script src="js/demo-seed.js"></script>
+<script>
+initI18nSwitcher(() => { if (typeof renderAll === 'function') renderAll(); });
+document.getElementById('langBtn')?.addEventListener('click', e => { e.stopPropagation(); document.getElementById('langMenu').classList.toggle('open'); });
+document.addEventListener('click', () => document.getElementById('langMenu')?.classList.remove('open'));
+const me = Session.guard('officer'); runEscalations();
+const dept = deptById(me.dept);
+document.getElementById('uName').textContent = me.name;
+document.getElementById('uMeta').textContent = `${me.designation} · ${dept.name}`;
+document.getElementById('deptTitle').textContent = `${dept.ico} ${dept.name} — Overview`;
+
+const hr = new Date().getHours();
+document.getElementById('greet').textContent =
+  `${hr < 12 ? t('greetMorning') : hr < 17 ? t('greetAfternoon') : t('greetEvening')}, ${me.name.split(' ').slice(-1)[0]}`;
+document.getElementById('dateLine').textContent =
+  new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+document.getElementById('avaBtn').textContent = me.name.replace(/^\S+\s/,'')[0] || me.name[0];
+document.getElementById('popName').textContent = me.name;
+document.getElementById('popMeta').textContent = `${me.designation} · ${dept.name}`;
+
+const themeBtn = document.getElementById('themeBtn');
+const applyTheme = t => { document.documentElement.dataset.theme = t; themeBtn.textContent = t === 'dark' ? '☀️' : '🌙'; localStorage.setItem('saarthi_theme_v2', t); };
+applyTheme(localStorage.getItem('saarthi_theme_v2') || 'light');
+themeBtn.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+const toggle = (btn, pop) => btn.addEventListener('click', e => { e.stopPropagation();
+  document.querySelectorAll('.pop').forEach(p => p !== pop && p.classList.remove('open')); pop.classList.toggle('open'); });
+toggle(document.getElementById('bellBtn'), document.getElementById('bellPop'));
+toggle(document.getElementById('avaBtn'), document.getElementById('avaPop'));
+document.addEventListener('click', () => document.querySelectorAll('.pop').forEach(p => p.classList.remove('open')));
+document.querySelectorAll('.pop').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
+
+function go(sec){
+  document.querySelectorAll('.dash-sec').forEach(s => s.classList.toggle('on', s.id === 'sec-' + sec));
+  document.querySelectorAll('.side a[data-sec]').forEach(a => a.classList.toggle('on', a.dataset.sec === sec));
+  document.querySelectorAll('.pop').forEach(p => p.classList.remove('open'));
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+document.querySelectorAll('.side a[data-sec]').forEach(a => a.addEventListener('click', () => go(a.dataset.sec)));
+
+const isDone = c => [STATUS.RESOLVED, STATUS.CLOSED].includes(c.status);
+// Each officer's personal queue: only files CURRENTLY at their level in the hierarchy.
+// Once a file is escalated or forwarded away, it leaves this officer's queue and
+// appears in the receiving officer's (or the DC's) queue instead.
+const deptComplaints = () => DB.get('complaints').filter(c => c.currentOfficerId === me.officerId)
+  .sort((a,b) => (a.escalated === b.escalated ? b.createdAt - a.createdAt : a.escalated ? -1 : 1));
+
+function renderOverview(){
+  const all = deptComplaints(), open = all.filter(c => !isDone(c));
+  const urgent = open.filter(c => c.urgentFromCMO);
+  document.getElementById('urgentBanner').innerHTML = urgent.length
+    ? urgent.map(c => `<div class="notice warn" style="border-left:4px solid var(--danger);cursor:pointer" onclick="go('queue');setTimeout(()=>openC('${c.appNo}'),50)">
+        🚨 <b>Urgent action required</b> — file <span class="mono">${c.appNo}</span> ("${c.subject}") was sent directly by ${c.urgentFromRole || 'CMO Punjab'}. Click to open.</div>`).join('')
+    : '';
+  document.getElementById('stTotal').textContent = all.length;
+  document.getElementById('stPending').textContent = open.length;
+  document.getElementById('stDone').textContent = all.length - open.length;
+  document.getElementById('stBreach').textContent = all.filter(c => c.escalated).length;
+  document.getElementById('stPendingSub').textContent = open.length ? 'Awaiting your action' : 'Queue is clear';
+  document.getElementById('stDoneSub').textContent = all.length ? Math.round((all.length-open.length)/all.length*100)+'% of total' : '';
+
+  const months = [], recv = [];
+  for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth()-i);
+    months.push(d.toLocaleString('en-IN',{month:'short'}));
+    recv.push(all.filter(c => { const cd=new Date(c.createdAt); return cd.getMonth()===d.getMonth() && cd.getFullYear()===d.getFullYear(); }).length); }
+  document.getElementById('kSpark').innerHTML = spark(recv);
+
+  const byWard = WARDS.map(w => ({ label:'W'+w.ward, value: all.filter(c => c.ward === w.ward).length }))
+    .filter(r => r.value).sort((a,b) => b.value - a.value).slice(0, 8);
+  document.getElementById('offBars').innerHTML = byWard.length ? bars(byWard) : '<div class="chart-empty">No grievances yet</div>';
+
+  const pct = all.length ? Math.round(all.filter(c => !c.escalated).length / all.length * 100) : 100;
+  document.getElementById('offGauge').innerHTML = gauge(pct) +
+    `<p style="font-size:.78rem;color:var(--muted);margin-top:.6rem">${all.length - all.filter(c=>c.escalated).length} of ${all.length} within the 36-hour window.</p>`;
+
+  const priority = open.filter(c => c.escalated || hoursLeft(c) <= 12).sort((a,b) => hoursLeft(a) - hoursLeft(b)).slice(0, 6);
+  document.getElementById('priorityList').innerHTML = priority.length
+    ? priority.map(c => `<div class="qcard card pri" style="margin-bottom:.6rem;padding:.8rem 1rem;cursor:pointer" onclick="openC('${c.appNo}')">
+        <div style="display:flex;justify-content:space-between;gap:.5rem"><b style="font-size:.86rem">${c.subject}</b>${slaTag(c)}</div>
+        <div style="font-size:.74rem;color:var(--muted);margin-top:.2rem">${c.appNo} · Ward ${c.ward} · ${c.name}</div></div>`).join('')
+    : `<div class="chart-empty">Nothing urgent — queue is healthy.</div>`;
+
+  const acts = all.flatMap(c => c.timeline.filter(t => t.by.includes(me.designation)).map(t => ({...t, appNo:c.appNo})))
+    .sort((a,b) => b.at - a.at).slice(0, 10);
+  document.getElementById('feed').innerHTML = acts.length
+    ? acts.map(a => `<li><div class="fi">📄</div><div><div class="ft">${a.status} — <span class="mono">${a.appNo}</span></div>
+        <div class="fs">${fmt(a.at)}</div></div></li>`).join('')
+    : `<li style="border:none"><div class="fs">No action taken yet.</div></li>`;
+
+  document.getElementById('bellDot').hidden = !open.length;
+  document.getElementById('notifList').innerHTML = open.length
+    ? open.slice(0,6).map(c => `<div class="item" style="cursor:pointer" onclick="openC('${c.appNo}')">
+        <div>${c.escalated ? '⚠️' : '📥'}</div><div><div class="t">${c.subject}</div>
+        <div class="s">${c.appNo} · ${c.status}</div></div></div>`).join('')
+    : `<div class="item"><div class="s">No pending files. Great work!</div></div>`;
+}
+
+document.getElementById('fStatus').innerHTML += Object.values(STATUS).map(s => `<option>${s}</option>`).join('');
+document.getElementById('fWard').innerHTML += WARDS.map(w => `<option value="${w.ward}">Ward ${w.ward}</option>`).join('');
+let view = 'table';
+document.getElementById('vTable').addEventListener('click', () => { view='table'; document.getElementById('vTable').classList.add('on'); document.getElementById('vCards').classList.remove('on'); renderQueue(); });
+document.getElementById('vCards').addEventListener('click', () => { view='cards'; document.getElementById('vCards').classList.add('on'); document.getElementById('vTable').classList.remove('on'); renderQueue(); });
+['fStatus','fWard','fSearch'].forEach(id => document.getElementById(id).addEventListener('input', renderQueue));
+document.getElementById('globalSearch').addEventListener('input', e => { document.getElementById('fSearch').value = e.target.value; go('queue'); renderQueue(); });
+
+function renderQueue(){
+  const s=document.getElementById('fStatus').value, wd=document.getElementById('fWard').value, q=document.getElementById('fSearch').value.toLowerCase();
+  const list = deptComplaints().filter(c => !s||c.status===s).filter(c => !wd||c.ward===Number(wd))
+    .filter(c => !q||c.appNo.includes(q)||c.subject.toLowerCase().includes(q)||c.name.toLowerCase().includes(q));
+  const area = document.getElementById('listArea');
+  if (!list.length){ area.innerHTML = `<div class="card empty"><div class="big">🗃️</div><p><b>No files match.</b><br>Adjust the filters, or enjoy the clear desk.</p></div>`; return; }
+  if (view === 'cards'){
+    area.innerHTML = `<div class="cards-grid">` + list.map(c => `
+      <div class="gcard" onclick="openC('${c.appNo}')">
+        <div class="ph">${c.photo ? `<img src="${c.photo}" alt="">` : '📄'}</div>
+        <div class="bd"><span class="mono no">${c.appNo}</span><h4>${c.subject}</h4><div>${badge(c)}</div>
+        <div class="meta">Ward ${c.ward} · ${c.name}<br>${slaTag(c)}</div></div></div>`).join('') + '</div>';
+  } else {
+    area.innerHTML = `<table class="tbl"><thead><tr><th>${t('thAppNo')}</th><th>${t('thComplainant')}</th><th>${t('thWard')}</th><th>${t('thStatus')}</th><th>${t('thSla')}</th><th></th></tr></thead><tbody>` +
+      list.map(c => `<tr><td class="mono">${c.appNo}</td>
+        <td><b>${c.subject}</b><br><span style="font-size:.73rem;color:var(--muted)">${c.name} · 📞 ${c.phone} · ${fmt(c.createdAt)}</span></td>
+        <td>Ward ${c.ward}</td><td>${badge(c)}</td><td>${slaTag(c)}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="openC('${c.appNo}')">Open file</button></td></tr>`).join('') + '</tbody></table>';
+  }
+}
+
+function renderAnalytics(){
+  const all = deptComplaints();
+  const byStatus = Object.entries(all.reduce((a,c)=>{a[c.status]=(a[c.status]||0)+1;return a;},{})).map(([label,value])=>({label,value}));
+  document.getElementById('anDonut').innerHTML = donut(byStatus);
+  const months=[], rv=[], rs=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toLocaleString('en-IN',{month:'short'}));
+    rv.push(all.filter(c=>{const cd=new Date(c.createdAt);return cd.getMonth()===d.getMonth()&&cd.getFullYear()===d.getFullYear();}).length);}
+  document.getElementById('anBars').innerHTML = bars(months.map((m,i)=>({label:m,value:rv[i]})));
+  const rows = WARDS.map(w => ({ label:'Ward '+w.ward, total: all.filter(c=>c.ward===w.ward).length, done: all.filter(c=>c.ward===w.ward&&isDone(c)).length }))
+    .filter(r=>r.total).sort((a,b)=>b.total-a.total);
+  document.getElementById('anRows').innerHTML = progressRows(rows);
+}
+
+function renderProfile(){
+  document.getElementById('profileKV').innerHTML = `
+    <dt>Name</dt><dd><b>${me.name}</b></dd>
+    <dt>Designation</dt><dd>${me.designation}</dd>
+    <dt>Department</dt><dd>${dept.ico} ${dept.name}</dd>
+    <dt>Contact</dt><dd>${dept.phone}</dd>
+    <dt>Reporting authority</dt><dd>${dept.higher}</dd>
+    <dt>SLA norm</dt><dd>36 hours per grievance</dd>`;
+}
+
+function exportCSV(){
+  const rows=[['Application No','Subject','Complainant','Ward','Status','Filed On','Escalated']]
+    .concat(deptComplaints().map(c=>[c.appNo,`"${c.subject}"`,c.name,c.ward,c.status,fmt(c.createdAt),c.escalated?'Yes':'No']));
+  const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='saarthi-'+dept.id+'-queue.csv'; a.click();
+  toast('Downloaded department queue as CSV.');
+}
+
+function openC(appNo){
+  const c = DB.get('complaints').find(x => x.appNo === appNo);
+  const cit = citizenById(c.citizenId);
+  document.getElementById('mTitle').textContent = 'File ' + c.appNo;
+  let action = '';
+  if ([STATUS.SUBMITTED, STATUS.REOPENED].includes(c.status)) action = `
+    <button class="btn btn-pine btn-sm" onclick="advance('${c.appNo}','${STATUS.RECEIVED}','Grievance received at the ${dept.name} department desk and taken on record.')">📥 Mark received</button>`;
+  else if (c.status === STATUS.RECEIVED) action = `
+    <button class="btn btn-pine btn-sm" onclick="advance('${c.appNo}','${STATUS.REVIEW}','${me.designation} has taken up the grievance for scrutiny and preliminary inquiry.')">🔍 Start review</button>`;
+  else if (c.status === STATUS.REVIEW) action = `
+    <div class="field"><label>Field officer to be deputed <span class="req">*</span></label><input id="aoName" placeholder="e.g. JE Sukhdev Singh"></div>
+    <div class="field"><label>Officer's contact number <span class="req">*</span></label><input id="aoPhone" maxlength="10" placeholder="10-digit mobile"></div>
+    <div class="field"><label>Remarks on file</label><textarea id="aoNote" rows="2" placeholder="Instructions to the field officer / observations"></textarea></div>
+    <button class="btn btn-pine btn-sm" onclick="assign('${c.appNo}')">👷 Assign officer</button>`;
+  else if (c.status === STATUS.ASSIGNED) action = `
+    <button class="btn btn-pine btn-sm" onclick="advance('${c.appNo}','${STATUS.PROGRESS}','Rectification work commenced at site by the deputed officer.')">🚧 Mark work in progress</button>`;
+  else if (c.status === STATUS.PROGRESS) action = `
+    <div class="field"><label>Action-taken report <span class="req">*</span></label><textarea id="resNote" rows="2" placeholder="What was done to resolve the issue"></textarea></div>
+    <button class="btn btn-pine btn-sm" onclick="resolve('${c.appNo}')">✅ Mark resolved</button>`;
+  else action = `<div class="notice info">No action pending from your desk. ${c.status===STATUS.RESOLVED?'Awaiting citizen confirmation.':'File stands closed.'}</div>`;
+
+  // Forward to senior or junior — for cases not in this officer's hands to solve,
+  // or work a senior wants to delegate down. If more than one officer shares the
+  // target tier, the officer picks which specific one.
+  const myRank = me.officerId ? officerById(me.officerId).rank : 0;
+  const seniors = (me.officerId && !isDone(c)) ? seniorTierOfficers(c.dept, myRank) : [];
+  const juniors = (me.officerId && !isDone(c)) ? juniorTierOfficers(c.dept, myRank) : [];
+  const forwardBlock = (seniors.length || juniors.length) ? `
+    <div style="border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem">
+      <p style="font-weight:700;font-size:.85rem;margin-bottom:.5rem">Forward this file</p>
+      ${seniors.length ? `
+        <div class="field"><label>Forward to senior</label>
+          <select id="fwdSenior">${seniors.map(s => `<option value="${s.id}">${s.name} — ${s.designation}</option>`).join('')}</select></div>
+        <div class="field"><label>Reason (optional)</label><textarea id="fwdSeniorReason" rows="2" placeholder="Why this needs a senior officer's attention"></textarea></div>
+        <button class="btn btn-outline btn-sm" onclick="forwardHierarchy('${c.appNo}','senior')" style="margin-bottom:${juniors.length ? '1rem' : '0'}">⬆️ Forward to senior</button>` : ''}
+      ${juniors.length ? `
+        <div class="field"><label>Forward to junior</label>
+          <select id="fwdJunior">${juniors.map(s => `<option value="${s.id}">${s.name} — ${s.designation}</option>`).join('')}</select></div>
+        <div class="field"><label>Instructions (optional)</label><textarea id="fwdJuniorReason" rows="2" placeholder="What needs to be done on the ground"></textarea></div>
+        <button class="btn btn-outline btn-sm" onclick="forwardHierarchy('${c.appNo}','junior')">⬇️ Forward to junior</button>` : ''}
+    </div>` : '';
+
+  document.getElementById('mBody').innerHTML = `
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">${badge(c)} ${slaTag(c)}</div>
+    ${c.urgentFromCMO && !isDone(c) ? `<div class="notice warn" style="border-left:4px solid var(--danger)"><b>🚨 Urgent action required</b> — this file was sent directly by ${c.urgentFromRole || 'CMO Punjab'}. Immediate attention is expected.</div>` : ''}
+    ${c.escalated && !isDone(c) ? `<div class="notice warn">⚠ SLA breached — file stands escalated to <b>${dept.higher}</b>. Dispose on priority.</div>` : ''}
+    <dl class="kv"><dt>Complainant</dt><dd><b>${c.name}</b> · 📞 ${c.phone}${cit && cit.email ? ' · ✉️ ' + cit.email : ''} · Ward ${c.ward}</dd>
+      ${cit && cit.address ? `<dt>Registered address</dt><dd>${cit.address}, ${cit.city || 'Rajpura'}</dd>` : ''}
+      <dt>Subject</dt><dd><b>${c.subject}</b></dd><dt>Description</dt><dd>${c.description}</dd>
+      <dt>Location</dt><dd>${c.address || 'Ward '+c.ward+', Rajpura'}${c.coords ? `<br><a style="color:var(--primary);font-size:.78rem;font-weight:700" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${c.coords.lat},${c.coords.lng}">📍 View on Google Maps ↗</a>` : ''}</dd>
+      ${c.assignedOfficer ? `<dt>Deputed officer</dt><dd>${c.assignedOfficer.name} · 📞 ${c.assignedOfficer.phone}</dd>` : ''}</dl>
+    ${c.photo ? `<p style="font-weight:700;font-size:.85rem;margin:1rem 0 .4rem">Photo evidence</p><img src="${c.photo}" style="max-height:200px;border-radius:10px;border:1px solid var(--line)">` : ''}
+    ${c.files && c.files.length ? `<p style="font-size:.8rem;color:var(--muted);margin-top:.4rem">📎 ${c.files.join(', ')}</p>` : ''}
+    <p style="font-weight:700;font-size:.85rem;margin:1.2rem 0 .6rem">File movement record</p><div class="ledger">${ledgerHTML(c)}</div>
+    <div style="border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem"><p style="font-weight:700;font-size:.85rem;margin-bottom:.6rem">Next action</p>${action}</div>
+    ${forwardBlock}`;
+  document.getElementById('modalBg').classList.add('open');
+}
+window.closeModal = () => document.getElementById('modalBg').classList.remove('open');
+document.getElementById('modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+window.forwardHierarchy = function(appNo, direction){
+  const targetId = direction === 'senior' ? document.getElementById('fwdSenior').value : document.getElementById('fwdJunior').value;
+  const reason = (direction === 'senior' ? document.getElementById('fwdSeniorReason') : document.getElementById('fwdJuniorReason')).value.trim();
+  const target = officerById(targetId);
+  const list = DB.get('complaints'); const c = list.find(x => x.appNo === appNo);
+  c.currentOfficerId = target.id; c.level = target.rank; c.levelStartedAt = Date.now();
+  c.timeline.push({
+    status: direction === 'senior' ? 'Forwarded to senior officer' : 'Forwarded to junior officer',
+    note: `Forwarded ${direction === 'senior' ? 'up' : 'down'} to ${target.name} (${target.designation}) by ${me.designation} ${me.name}.` + (reason ? ` ${direction === 'senior' ? 'Reason' : 'Instructions'}: "${reason}"` : ''),
+    by: `${me.designation}, ${dept.name}`, at: Date.now()
+  });
+  DB.set('complaints', list);
+  closeModal(); renderAll();
+  toast(`Forwarded to ${target.name}.`);
+};
+
+function save(appNo, mutate){
+  const list = DB.get('complaints'); const c = list.find(x => x.appNo === appNo);
+  mutate(c); DB.set('complaints', list); renderAll(); openC(appNo);
+  const cit = citizenById(c.citizenId);
+  if (cit) notifyStatus(cit, c, c.status);
+}
+function advance(appNo, status, note){ save(appNo, c => { c.status = status; c.timeline.push({ status, note, by: `${me.designation} ${me.name.split(' ').slice(1).join(' ')}, ${dept.name}`, at: Date.now() }); }); toast('File updated: ' + status); }
+function assign(appNo){
+  const name = document.getElementById('aoName').value.trim(), phone = document.getElementById('aoPhone').value.trim();
+  if (name.length < 3) return toast("Enter the deputed officer's name.", 'bad');
+  if (!/^[6-9]\d{9}$/.test(phone)) return toast('Enter a valid 10-digit contact number.', 'bad');
+  const note = document.getElementById('aoNote').value.trim();
+  save(appNo, c => { c.status = STATUS.ASSIGNED; c.assignedOfficer = { name, phone };
+    c.timeline.push({ status: STATUS.ASSIGNED, note: `${name} (📞 ${phone}) deputed for site inspection and rectification.` + (note ? ` Remarks: ${note}` : ''), by: `${me.designation}, ${dept.name}`, at: Date.now() }); });
+  toast('Officer assigned — the citizen can now see the name and contact.');
+}
+function resolve(appNo){
+  const note = document.getElementById('resNote').value.trim();
+  if (note.length < 15) return toast('The action-taken report must describe what was done (15+ characters).', 'bad');
+  save(appNo, c => { c.status = STATUS.RESOLVED; c.timeline.push({ status: STATUS.RESOLVED, note: `Action-taken report: ${note}. Grievance marked resolved — pending citizen confirmation.`, by: `${me.designation}, ${dept.name}`, at: Date.now() }); });
+  toast('Marked resolved. The citizen will confirm or reopen.');
+}
+
+function renderAll(){ renderOverview(); renderQueue(); renderAnalytics(); renderProfile(); }
+renderAll();
+</script>
+</body>
+</html>

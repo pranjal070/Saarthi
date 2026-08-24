@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Citizen dashboard · Saarthi</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+<div class="phulkari"></div>
+<div class="dash">
+  <aside class="side">
+    <div class="who"><b id="uName"></b><span id="uMeta"></span></div>
+    <a class="on" data-sec="overview">📊 <span data-i18n="navOverview">Overview</span></a>
+    <a data-sec="grievances">📋 <span data-i18n="navGrievances">My grievances</span></a>
+    <a data-sec="file">✍️ <span data-i18n="navFile">File a grievance</span></a>
+    <a data-sec="ward">🏘️ <span data-i18n="navWard">Ward insights</span></a>
+    <a data-sec="mc">🤝 <span data-i18n="navMC">My councillor</span></a>
+    <a data-sec="profile">👤 <span data-i18n="navProfile">My profile</span></a>
+    <a href="#" onclick="goHome();return false;">🏠 <span data-i18n="navHome">Portal home</span></a>
+    <button class="navlink logout" onclick="confirmSignOut()">↩ <span data-i18n="navSignout">Sign out</span></button>
+  </aside>
+
+  <div>
+    <!-- ================= TOPBAR ================= -->
+    <div class="topbar">
+      <div class="hello"><b id="greet"></b><span id="dateLine"></span></div>
+
+      <div class="gsearch">
+        <span class="ic">🔍</span>
+        <input id="globalSearch" placeholder="Search application no. or subject…">
+      </div>
+
+      <div class="wrap-rel">
+        <button class="iconbtn" id="bellBtn">🔔<span class="dot-badge" id="bellDot" hidden></span></button>
+        <div class="pop" id="bellPop"><h5>Notifications</h5><div id="notifList"></div></div>
+      </div>
+
+      <div class="wrap-rel langsw">
+        <button id="langBtn">🌐 <span id="langCur">EN</span></button>
+        <div class="lang-menu" id="langMenu">
+          <button class="lang-opt" data-lang="en">🇬🇧 English</button>
+          <button class="lang-opt" data-lang="pa">ਪੰ ਪੰਜਾਬੀ</button>
+          <button class="lang-opt" data-lang="hi">हि हिंदी</button>
+        </div>
+      </div>
+      <button class="iconbtn" id="themeBtn" title="Toggle theme">🌙</button>
+
+      <div class="wrap-rel">
+        <button class="avatar" id="avaBtn"></button>
+        <div class="pop" id="avaPop" style="width:230px">
+          <h5>Signed in as</h5>
+          <div class="item"><div><div class="t" id="popName"></div><div class="s" id="popMeta"></div></div></div>
+          <div class="item" style="cursor:pointer" onclick="go('profile')">👤 <div class="t">My profile</div></div>
+          <div class="item" style="cursor:pointer" onclick="exportCSV()">⬇️ <div class="t">Export my data (CSV)</div></div>
+          <div class="item" style="cursor:pointer" onclick="window.print()">🖨️ <div class="t">Print this page</div></div>
+          <div class="item" style="cursor:pointer;color:var(--danger)" onclick="confirmSignOut()">↩ <div class="t">Sign out</div></div>
+        </div>
+      </div>
+    </div>
+
+    <main class="main">
+      <!-- ================= OVERVIEW ================= -->
+      <section class="dash-sec on" id="sec-overview">
+        <h2 class="pg">Overview</h2>
+        <p class="pg-sub">A live picture of every grievance you have filed on Saarthi.</p>
+
+        <div class="grid-4" style="margin-bottom:1.1rem">
+          <div class="card kpi c-blue"><div class="top"><div><span class="lbl" data-i18n="kpiTotalFiled">Total filed</span></div><div class="ic">🗂️</div></div><b id="kTotal">0</b><div id="kSpark"></div></div>
+          <div class="card kpi c-amber"><div class="top"><div><span class="lbl" data-i18n="kpiInProcess">In process</span></div><div class="ic">⏳</div></div><b id="kOpen">0</b><div class="prow-sub" id="kOpenSub"></div></div>
+          <div class="card kpi c-green"><div class="top"><div><span class="lbl" data-i18n="kpiResolved">Resolved</span></div><div class="ic">✅</div></div><b id="kDone">0</b><div class="prow-sub" id="kDoneSub"></div></div>
+          <div class="card kpi c-red"><div class="top"><div><span class="lbl" data-i18n="kpiEscalated">Escalated</span></div><div class="ic">⚠️</div></div><b id="kEsc">0</b><div class="prow-sub">Past the 36-hour window</div></div>
+        </div>
+
+        <div class="split" style="margin-bottom:1.1rem">
+          <div class="panel">
+            <div class="p-head"><h3>Grievances by department</h3><span class="sub">All time</span></div>
+            <div class="p-body" id="chDonut"></div>
+          </div>
+          <div class="panel">
+            <div class="p-head"><h3>SLA compliance</h3><span class="sub">36-hour rule</span></div>
+            <div class="p-body" style="text-align:center" id="chGauge"></div>
+          </div>
+        </div>
+
+        <div class="split">
+          <div class="panel">
+            <div class="p-head"><h3>Filing trend</h3><span class="sub">Last 6 months</span></div>
+            <div class="p-body" id="chBars"></div>
+          </div>
+          <div class="panel">
+            <div class="p-head"><h3>Recent activity</h3><span class="sub">Live feed</span></div>
+            <div class="p-body"><ul class="feed" id="feed"></ul></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= GRIEVANCES ================= -->
+      <section class="dash-sec" id="sec-grievances">
+        <h2 class="pg">My grievances</h2>
+        <p class="pg-sub">Filter, search, and open any file to see its complete movement record.</p>
+
+        <div class="filter-bar">
+          <select id="fStatus"><option value="" data-i18n="allStatuses">All statuses</option></select>
+          <select id="fDept"><option value="" data-i18n="allDepts">All departments</option></select>
+          <select id="fSort">
+            <option value="new" data-i18n="newestFirst">Newest first</option>
+            <option value="old" data-i18n="oldestFirst">Oldest first</option>
+            <option value="sla" data-i18n="slaUrgency">SLA urgency</option>
+          </select>
+          <input id="fSearch" placeholder="Search subject / application no.">
+          <div class="seg-ctl" style="margin-left:auto">
+            <button class="on" id="vTable" data-i18n="viewTable">☰ Table</button>
+            <button id="vCards" data-i18n="viewCards">▦ Cards</button>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="exportCSV()" data-i18n="csvShort">⬇️ CSV</button>
+        </div>
+        <div id="listArea"></div>
+      </section>
+
+      <!-- ================= FILE A GRIEVANCE ================= -->
+      <section class="dash-sec" id="sec-file">
+        <h2 class="pg" data-i18n="fileTitle">File a grievance</h2>
+        <p class="pg-sub" data-i18n="fileSub">Your application reaches the designated officer's desk the moment you submit.</p>
+
+        <form id="cForm" class="card" style="max-width:820px;margin-inline:auto" novalidate>
+          <div class="form-grid">
+            <div class="field"><label data-i18n="yourName">Your name</label>
+              <input name="name" readonly style="background:var(--paper)"></div>
+            <div class="field"><label data-i18n="mobileNo">Mobile number</label>
+              <input name="phone" readonly style="background:var(--paper)"></div>
+
+            <div class="field full"><label data-i18n="sendTo">Send this grievance to</label> <span class="req">*</span>
+              <select name="dept" id="deptSel">
+                <option value="" data-i18n="selectDept">Select department</option>
+                <option value="mc-office" data-i18n="toMC">🤝 My Municipal Councillor (Ward office)</option>
+              </select>
+              <div class="hint" id="deptHint"></div>
+              <div class="err"></div></div>
+
+            <div class="field full"><label data-i18n="subject">Subject</label> <span class="req">*</span>
+              <input name="subject" maxlength="90" placeholder="e.g. Deep pothole near Gol Chowk service lane" data-i18n-ph="subjectP">
+              <div class="err"></div></div>
+
+            <div class="field full"><label data-i18n="describe">Describe the issue</label> <span class="req">*</span>
+              <textarea name="description" rows="4" placeholder="What is the problem, since when, and how is it affecting residents?" data-i18n-ph="describeP"></textarea>
+              <div class="err"></div></div>
+
+            <div class="field full"><label data-i18n="issueLocation">Issue location</label> <span class="req">*</span>
+              <div style="display:flex;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap">
+                <button type="button" class="btn btn-outline btn-sm" id="locBtn" data-i18n="useLocation">📍 Use my current location</button>
+                <span class="hint" style="align-self:center" data-i18n="tapMap">or click directly on the map to pin the exact spot</span>
+              </div>
+              <div id="map"></div>
+              <input type="hidden" name="lat"><input type="hidden" name="lng">
+              <div class="hint" id="addrHint" data-i18n="noLocation">No location pinned yet.</div>
+              <div class="err"></div></div>
+
+            <div class="field"><label data-i18n="photo">Photo evidence (geotagged)</label>
+              <input type="file" name="photo" id="photoIn" accept="image/*">
+              <div class="hint" data-i18n="photoHint">The pinned map location is stamped onto this photo's record.</div>
+              <div class="photo-prev" id="photoPrev"><img alt="Preview"></div></div>
+
+            <div class="field"><label data-i18n="docs">Supporting documents</label>
+              <input type="file" name="docs" id="docsIn" multiple accept=".pdf,.doc,.docx,.jpg,.png">
+              <div class="hint" id="docsHint" data-i18n="docsHint">Bills, notices, previous applications.</div></div>
+          </div>
+
+          <button class="btn btn-pine btn-block" style="margin-top:.6rem" data-i18n="submitGrievance">Submit grievance</button>
+        </form>
+      </section>
+
+      <!-- ================= WARD ================= -->
+      <section class="dash-sec" id="sec-ward">
+        <h2 class="pg">Ward insights</h2>
+        <p class="pg-sub">How every department is performing in your ward — public accountability at a glance.</p>
+        <div class="grid-4" style="margin-bottom:1.1rem">
+          <div class="card kpi c-blue"><div class="top"><span class="lbl">Ward grievances</span><div class="ic">🏘️</div></div><b id="wTotal">0</b></div>
+          <div class="card kpi c-green"><div class="top"><span class="lbl">Resolution rate</span><div class="ic">📈</div></div><b id="wRate">0%</b></div>
+          <div class="card kpi c-amber"><div class="top"><span class="lbl">Avg. disposal</span><div class="ic">⏱️</div></div><b id="wAvg">—</b></div>
+          <div class="card kpi c-red"><div class="top"><span class="lbl">Residents active</span><div class="ic">👥</div></div><b id="wUsers">0</b></div>
+        </div>
+        <div class="split">
+          <div class="panel"><div class="p-head"><h3>Department performance</h3><span class="sub" id="wardLabel"></span></div>
+            <div class="p-body" id="wardRows"></div></div>
+          <div class="panel"><div class="p-head"><h3>Most reported issues</h3><span class="sub">Your ward</span></div>
+            <div class="p-body" id="wardDonut"></div></div>
+        </div>
+      </section>
+
+      <!-- ================= MC ================= -->
+      <section class="dash-sec" id="sec-mc">
+        <h2 class="pg">My councillor</h2>
+        <p class="pg-sub">Your elected representative for this ward, mapped automatically at registration.</p>
+        <div class="card mc-card" style="margin-bottom:1.1rem">
+          <div class="av" id="mcAv"></div>
+          <div style="flex:1">
+            <p class="eyebrow" style="margin-bottom:.1rem">Municipal Councillor</p>
+            <b id="mcName" style="font-size:1.05rem"></b>
+            <p style="font-size:.83rem;color:var(--muted)" id="mcMeta"></p>
+          </div>
+          <a class="btn btn-gold" href="#" onclick="go('file');document.getElementById('deptSel').value='mc-office';document.getElementById('deptSel').dispatchEvent(new Event('change'));return false;">✍️ Write to councillor</a>
+        </div>
+        <div class="panel"><div class="p-head"><h3>Grievances with the councillor's office</h3></div>
+          <div class="p-body" id="mcList"></div></div>
+      </section>
+
+      <!-- ================= PROFILE ================= -->
+      <section class="dash-sec" id="sec-profile">
+        <h2 class="pg">My profile</h2>
+        <p class="pg-sub">Registration details on record with Saarthi. Identity fields are locked for verification integrity.</p>
+        <div class="panel" style="max-width:640px"><div class="p-head"><h3>Citizen record</h3><span class="sub" id="pSince"></span></div>
+          <div class="p-body">
+            <form id="profileForm">
+              <div class="form-grid">
+                <div class="field"><label>Full name</label><input name="name" required></div>
+                <div class="field"><label>Mobile number</label><input name="phone" maxlength="10" inputmode="numeric" required></div>
+                <div class="field"><label>Email address</label><input name="email" type="email" required></div>
+                <div class="field"><label>Blood group</label>
+                  <select name="blood"><option value="">Not specified</option>
+                    <option>A+</option><option>A−</option><option>B+</option><option>B−</option>
+                    <option>AB+</option><option>AB−</option><option>O+</option><option>O−</option></select></div>
+                <div class="field full"><label>Full address</label><textarea name="address" rows="2" required></textarea></div>
+                <div class="field"><label>Aadhaar number</label><input value="" id="pAadhaar" readonly style="background:var(--paper)"></div>
+                <div class="field"><label>Voter ID</label><input value="" id="pVoter" readonly style="background:var(--paper)"></div>
+              </div>
+              <button class="btn btn-pine" type="submit">Save changes</button>
+            </form>
+          </div></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="m-head"><h3 id="mTitle">Grievance</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="m-body" id="mBody"></div>
+  </div>
+</div>
+
+<!-- Success modal for grievance filing -->
+<div class="modal-bg" id="doneBg">
+  <div class="modal" style="width:min(480px,100%);text-align:center">
+    <div class="m-body" style="padding:2.2rem 1.6rem">
+      <div style="font-size:2.6rem">✅</div>
+      <h3 style="font-size:1.3rem;margin:.5rem 0" data-i18n="registered">Grievance registered</h3>
+      <p style="font-size:.88rem;color:var(--muted)" data-i18n="noteDown">Your application number — note it down to track your file:</p>
+      <div class="mono" style="font-size:1.6rem;margin:.8rem 0" id="doneNo"></div>
+      <p style="font-size:.8rem;color:var(--muted)" id="doneMeta"></p>
+      <p style="font-size:.76rem;color:var(--muted);margin-top:.6rem" id="doneNotify"></p>
+      <button class="btn btn-pine" style="margin-top:1.2rem" onclick="closeDone()">Done</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>if (maintenanceGate()) { throw new Error("maintenance"); }</script>
+<script src="js/i18n.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/notify.js"></script>
+<script src="js/demo-seed.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Fix: after signing out, pressing the browser Back button could show this page
+// from the browser's cache without re-checking the session — letting a signed-out
+// person appear to still be inside the dashboard. Force a fresh session check
+// whenever the page is restored from that cache.
+window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
+
+initI18nSwitcher(() => { if (typeof renderAll === 'function') renderAll(); });
+document.getElementById('langBtn')?.addEventListener('click', e => { e.stopPropagation(); document.getElementById('langMenu').classList.toggle('open'); });
+document.addEventListener('click', () => document.getElementById('langMenu')?.classList.remove('open'));
+const me = Session.guard('citizen'); runEscalations();
+const user = DB.get('users').find(u => u.id === me.id) || {};
+const w = wardByNo(me.ward);
+
+/* ---------- Chrome ---------- */
+document.getElementById('uName').textContent = me.name;
+document.getElementById('uMeta').textContent = `Citizen · Ward ${me.ward}, Rajpura`;
+const hr = new Date().getHours();
+document.getElementById('greet').textContent =
+  `${hr < 12 ? t('greetMorning') : hr < 17 ? t('greetAfternoon') : t('greetEvening')}, ${me.name.split(' ')[0]}`;
+document.getElementById('dateLine').textContent =
+  new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+document.getElementById('avaBtn').textContent = me.name[0].toUpperCase();
+document.getElementById('popName').textContent = me.name;
+document.getElementById('popMeta').textContent = `Ward ${me.ward} · ${me.phone}`;
+
+/* ---------- Theme toggle (localStorage — T23) ---------- */
+const themeBtn = document.getElementById('themeBtn');
+const applyTheme = t => {
+  document.documentElement.dataset.theme = t;
+  themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('saarthi_theme_v2', t);
+};
+applyTheme(localStorage.getItem('saarthi_theme_v2') || 'light');
+themeBtn.addEventListener('click', () =>
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+/* ---------- Dropdowns ---------- */
+const toggle = (btn, pop) => btn.addEventListener('click', e => {
+  e.stopPropagation();
+  document.querySelectorAll('.pop').forEach(p => p !== pop && p.classList.remove('open'));
+  pop.classList.toggle('open');
+});
+toggle(document.getElementById('bellBtn'), document.getElementById('bellPop'));
+toggle(document.getElementById('avaBtn'), document.getElementById('avaPop'));
+document.addEventListener('click', () => document.querySelectorAll('.pop').forEach(p => p.classList.remove('open')));
+document.querySelectorAll('.pop').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
+
+/* ---------- Section navigation ---------- */
+function go(sec){
+  document.querySelectorAll('.dash-sec').forEach(s => s.classList.toggle('on', s.id === 'sec-' + sec));
+  document.querySelectorAll('.side a[data-sec]').forEach(a => a.classList.toggle('on', a.dataset.sec === sec));
+  document.querySelectorAll('.pop').forEach(p => p.classList.remove('open'));
+  window.scrollTo({ top:0, behavior:'smooth' });
+  if (sec === 'file') initFileForm();   // lazy — Leaflet needs a visible, sized container
+}
+document.querySelectorAll('.side a[data-sec]').forEach(a =>
+  a.addEventListener('click', () => go(a.dataset.sec)));
+
+/* ---------- Data helpers ---------- */
+const mine = () => DB.get('complaints').filter(c => c.citizenId === me.id);
+const isDone = c => [STATUS.RESOLVED, STATUS.CLOSED].includes(c.status);
+
+/* ---------- OVERVIEW ---------- */
+function renderOverview(){
+  const list = mine();
+  const open = list.filter(c => !isDone(c));
+  document.getElementById('kTotal').textContent = list.length;
+  document.getElementById('kOpen').textContent = open.length;
+  document.getElementById('kDone').textContent = list.filter(isDone).length;
+  document.getElementById('kEsc').textContent = list.filter(c => c.escalated).length;
+  document.getElementById('kOpenSub').textContent = open.length ? 'Awaiting departmental action' : 'Nothing pending';
+  const rate = list.length ? Math.round(list.filter(isDone).length / list.length * 100) : 0;
+  document.getElementById('kDoneSub').textContent = rate + '% of your grievances';
+
+  // last 6 months trend
+  const months = [], counts = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(); d.setMonth(d.getMonth() - i);
+    months.push(d.toLocaleString('en-IN', { month:'short' }));
+    counts.push(list.filter(c => {
+      const cd = new Date(c.createdAt);
+      return cd.getMonth() === d.getMonth() && cd.getFullYear() === d.getFullYear();
+    }).length);
+  }
+  document.getElementById('kSpark').innerHTML = spark(counts);
+  document.getElementById('chBars').innerHTML = bars(months.map((m, i) => ({ label:m, value:counts[i] })));
+
+  // donut by department
+  const byDept = Object.entries(list.reduce((a, c) => {
+    const n = deptById(c.dept).name; a[n] = (a[n] || 0) + 1; return a;
+  }, {})).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
+  document.getElementById('chDonut').innerHTML = donut(byDept);
+
+  // SLA gauge — share of files not breached
+  const pct = list.length ? Math.round(list.filter(c => !c.escalated).length / list.length * 100) : 100;
+  document.getElementById('chGauge').innerHTML = gauge(pct) +
+    `<p style="font-size:.78rem;color:var(--muted);margin-top:.6rem">
+      ${list.filter(c => !c.escalated).length} of ${list.length} files disposed within the 36-hour window.</p>`;
+
+  // activity feed — flatten all timelines, newest first
+  const acts = list.flatMap(c => c.timeline.map(t => ({ ...t, appNo:c.appNo, subject:c.subject })))
+    .sort((a, b) => b.at - a.at).slice(0, 12);
+  document.getElementById('feed').innerHTML = acts.length
+    ? acts.map(a => `<li><div class="fi">${a.status === 'Escalated' ? '⚠️' : isDoneStatus(a.status) ? '✅' : '📄'}</div>
+        <div><div class="ft">${a.status} — <span class="mono">${a.appNo}</span></div>
+        <div class="fs">${a.note.slice(0, 90)}${a.note.length > 90 ? '…' : ''}</div>
+        <div class="fs">${fmt(a.at)}</div></div></li>`).join('')
+    : `<li style="border:none"><div class="fs">No activity yet — file your first grievance to see it here.</div></li>`;
+
+  // notifications = updates not made by the citizen
+  const notes = acts.filter(a => !a.by.includes(me.name)).slice(0, 6);
+  document.getElementById('bellDot').hidden = !notes.length;
+  document.getElementById('notifList').innerHTML = notes.length
+    ? notes.map(n => `<div class="item" style="cursor:pointer" onclick="openC('${n.appNo}')">
+        <div>${n.status === 'Escalated' ? '⚠️' : '📬'}</div>
+        <div><div class="t">${n.status} · ${n.appNo}</div><div class="s">${n.subject}</div>
+        <div class="s">${fmt(n.at)}</div></div></div>`).join('')
+    : `<div class="item"><div class="s">No new updates.</div></div>`;
+}
+const isDoneStatus = s => [STATUS.RESOLVED, STATUS.CLOSED].includes(s);
+
+/* ---------- GRIEVANCES LIST ---------- */
+document.getElementById('fStatus').innerHTML += Object.values(STATUS).map(s => `<option>${s}</option>`).join('');
+document.getElementById('fDept').innerHTML += allDepartments().map(d => `<option value="${d.id}">${d.name}</option>`).join('')
+  + `<option value="mc-office">Municipal Councillor</option>`;
+let view = 'table';
+document.getElementById('vTable').addEventListener('click', () => { view='table';
+  document.getElementById('vTable').classList.add('on'); document.getElementById('vCards').classList.remove('on'); renderList(); });
+document.getElementById('vCards').addEventListener('click', () => { view='cards';
+  document.getElementById('vCards').classList.add('on'); document.getElementById('vTable').classList.remove('on'); renderList(); });
+['fStatus','fDept','fSort','fSearch'].forEach(id =>
+  document.getElementById(id).addEventListener('input', renderList));
+document.getElementById('globalSearch').addEventListener('input', e => {
+  document.getElementById('fSearch').value = e.target.value; go('grievances'); renderList();
+});
+
+function filtered(){
+  const s = document.getElementById('fStatus').value, d = document.getElementById('fDept').value;
+  const q = document.getElementById('fSearch').value.toLowerCase(), sort = document.getElementById('fSort').value;
+  let list = mine()
+    .filter(c => !s || c.status === s)
+    .filter(c => !d || c.dept === d)
+    .filter(c => !q || c.appNo.includes(q) || c.subject.toLowerCase().includes(q));
+  if (sort === 'new') list.sort((a,b) => b.createdAt - a.createdAt);
+  if (sort === 'old') list.sort((a,b) => a.createdAt - b.createdAt);
+  if (sort === 'sla') list.sort((a,b) => hoursLeft(a) - hoursLeft(b));
+  return list;
+}
+function renderList(){
+  const list = filtered(), area = document.getElementById('listArea');
+  if (!list.length) {
+    area.innerHTML = `<div class="card empty"><div class="big">🗂️</div>
+      <p><b>No grievances match.</b><br>Adjust the filters, or file a new grievance.</p>
+      <a class="btn btn-gold" style="margin-top:1rem" href="#" onclick="go('file');return false;">File a grievance</a></div>`;
+    return;
+  }
+  if (view === 'cards') {
+    area.innerHTML = `<div class="cards-grid">` + list.map(c => `
+      <div class="gcard" onclick="openC('${c.appNo}')">
+        <div class="ph">${c.photo ? `<img src="${c.photo}" alt="">` : deptById(c.dept).ico || '📄'}</div>
+        <div class="bd">
+          <span class="mono no">${c.appNo}</span>
+          <h4>${c.subject}</h4>
+          <div>${badge(c)}</div>
+          <div class="meta">${deptById(c.dept).name} · ${fmt(c.createdAt)}<br>${cdPill(c)}</div>
+        </div></div>`).join('') + '</div>';
+  } else {
+    area.innerHTML = `<table class="tbl"><thead><tr>
+      <th>${t('thAppNo')}</th><th>${t('thSubject')}</th><th>${t('thDept')}</th><th>${t('thStatus')}</th><th>${t('thTimeLeft')}</th><th></th>
+    </tr></thead><tbody>` + list.map(c => `
+      <tr>
+        <td class="mono">${c.appNo}</td>
+        <td><b>${c.subject}</b><br><span style="font-size:.73rem;color:var(--muted)">${fmt(c.createdAt)}</span></td>
+        <td>${deptById(c.dept).name}</td>
+        <td>${badge(c)}</td>
+        <td>${cdPill(c)}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="openC('${c.appNo}')">View file</button></td>
+      </tr>`).join('') + '</tbody></table>';
+  }
+}
+// live countdown pill
+function cdPill(c){
+  if (isDone(c)) return `<span class="cd">Closed</span>`;
+  const h = hoursLeft(c);
+  if (h <= 0) return `<span class="cd over">SLA breached</span>`;
+  const H = Math.floor(h), M = Math.floor((h - H) * 60);
+  return `<span class="cd ${h <= 12 ? 'warn' : ''}" data-created="${c.createdAt}" data-dept="${c.dept}">${H}h ${M}m left</span>`;
+}
+setInterval(() => {                       // ticks every 30s so the demo feels alive
+  document.querySelectorAll('.cd[data-created]').forEach(el => {
+    const h = deptSlaHours(el.dataset.dept) - (Date.now() - Number(el.dataset.created)) / 36e5;
+    if (h <= 0) { el.textContent = 'SLA breached'; el.className = 'cd over'; return; }
+    el.textContent = `${Math.floor(h)}h ${Math.floor((h % 1) * 60)}m left`;
+  });
+}, 30000);
+
+/* ---------- WARD ---------- */
+function renderWard(){
+  const wardList = DB.get('complaints').filter(c => c.ward === me.ward);
+  const done = wardList.filter(isDone);
+  document.getElementById('wTotal').textContent = wardList.length;
+  document.getElementById('wRate').textContent = (wardList.length ? Math.round(done.length / wardList.length * 100) : 0) + '%';
+  document.getElementById('wUsers').textContent = DB.get('users').filter(u => u.ward === me.ward).length;
+  document.getElementById('wardLabel').textContent = `Ward ${me.ward}`;
+  const avg = done.length
+    ? done.reduce((s, c) => s + (c.timeline[c.timeline.length-1].at - c.createdAt), 0) / done.length / 36e5 : 0;
+  document.getElementById('wAvg').textContent = done.length ? avg.toFixed(1) + 'h' : '—';
+
+  const rows = Object.entries(wardList.reduce((a, c) => {
+    const n = deptById(c.dept).name;
+    a[n] = a[n] || { done:0, total:0 }; a[n].total++; if (isDone(c)) a[n].done++; return a;
+  }, {})).map(([label, v]) => ({ label, ...v })).sort((a,b) => b.total - a.total);
+  document.getElementById('wardRows').innerHTML = progressRows(rows);
+  document.getElementById('wardDonut').innerHTML = donut(rows.map(r => ({ label:r.label, value:r.total })));
+}
+
+/* ---------- MC + PROFILE ---------- */
+document.getElementById('mcAv').textContent = w.mcName[0];
+document.getElementById('mcName').textContent = w.mcName;
+document.getElementById('mcMeta').textContent = `📞 ${w.phone} · ${w.office}`;
+function renderMC(){
+  const list = mine().filter(c => c.dept === 'mc-office' || c.forwardedByMC);
+  document.getElementById('mcList').innerHTML = list.length
+    ? list.map(c => `<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.6rem 0;border-bottom:1px solid var(--line)">
+        <div><b style="font-size:.88rem">${c.subject}</b><br>
+        <span class="mono" style="font-size:.73rem">${c.appNo}</span>
+        <span style="font-size:.73rem;color:var(--muted)"> · now with ${deptById(c.dept).name}</span></div>
+        <button class="btn btn-outline btn-sm" onclick="openC('${c.appNo}')">Open</button></div>`).join('')
+    : `<div class="chart-empty">You haven't written to your councillor yet.</div>`;
+}
+function renderProfile(){
+  document.getElementById('pSince').textContent = user.createdAt ? 'Registered ' + fmt(user.createdAt) : '';
+  const f = document.getElementById('profileForm');
+  f.name.value = user.name || me.name;
+  f.phone.value = user.phone || me.phone;
+  f.email.value = user.email || '';
+  f.blood.value = user.blood || '';
+  f.address.value = user.address || '';
+  document.getElementById('pAadhaar').value = user.aadhaarMasked || '—';
+  document.getElementById('pVoter').value = user.voterId || 'Not provided';
+}
+document.getElementById('profileForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  const name = f.name.value.trim(), phone = f.phone.value.trim(), email = f.email.value.trim(), address = f.address.value.trim();
+  if (name.length < 3) return toast('Enter a valid full name.', 'bad');
+  if (!/^[6-9]\d{9}$/.test(phone)) return toast('Enter a valid 10-digit mobile number.', 'bad');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast('Enter a valid email address.', 'bad');
+  if (address.length < 10) return toast('Enter your complete address.', 'bad');
+  const users = DB.get('users');
+  const u = users.find(x => x.id === me.id);
+  u.name = name; u.phone = phone; u.email = email; u.blood = f.blood.value || null; u.address = address;
+  DB.set('users', users);
+  Session.login({ role:'citizen', id: me.id, name, ward: me.ward, phone });
+  document.getElementById('uName').textContent = name;
+  toast('Profile updated.');
+});
+
+/* ---------- CSV export ---------- */
+function exportCSV(){
+  const rows = [['Application No','Subject','Department','Status','Filed On','Escalated']]
+    .concat(mine().map(c => [c.appNo, `"${c.subject}"`, deptById(c.dept).name, c.status, fmt(c.createdAt), c.escalated ? 'Yes' : 'No']));
+  const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type:'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'saarthi-my-grievances.csv'; a.click();
+  toast('Downloaded your grievance record as CSV.');
+}
+
+/* ---------- File modal with pipeline stepper ---------- */
+const PIPE = [STATUS.SUBMITTED, STATUS.RECEIVED, STATUS.REVIEW, STATUS.ASSIGNED, STATUS.PROGRESS, STATUS.RESOLVED, STATUS.CLOSED];
+function openC(appNo){
+  const c = DB.get('complaints').find(x => x.appNo === appNo);
+  document.getElementById('mTitle').textContent = 'Application ' + c.appNo;
+  const d = deptById(c.dept);
+  const idx = PIPE.indexOf(c.status);
+  const stepper = `<div class="stepper">` + PIPE.map((s, i) => `
+    <div class="st ${i < idx ? 'done' : i === idx ? 'now' : ''}"><div class="ln"></div>${trStatus(s).split(' ')[0]}</div>`).join('') + '</div>';
+
+  let actions = '';
+  if (c.status === STATUS.RESOLVED) actions = `
+    <div class="notice info" style="margin-top:1rem">The department has marked this grievance resolved. Are you satisfied?</div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+      <button class="btn btn-gold btn-sm" onclick="closeC('${c.appNo}',5)">✔ Satisfied — close (★★★★★)</button>
+      <button class="btn btn-outline btn-sm" onclick="closeC('${c.appNo}',3)">Close with ★★★</button>
+      <button class="btn btn-danger btn-sm" onclick="reopenC('${c.appNo}')">✖ Not fixed — reopen</button>
+    </div>`;
+  if (c.status === STATUS.CLOSED && c.rating)
+    actions = `<div class="notice info" style="margin-top:1rem">You closed this grievance with ${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)}.</div>`;
+
+  document.getElementById('mBody').innerHTML = `
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.6rem">${badge(c)} ${cdPill(c)}</div>
+    ${stepper}
+    <dl class="kv">
+      <dt>Subject</dt><dd><b>${c.subject}</b></dd>
+      <dt>Department</dt><dd>${d.ico || ''} ${d.name}</dd>
+      <dt>Filed on</dt><dd>${fmt(c.createdAt)}</dd>
+      <dt>Location</dt><dd>${c.address || 'Ward ' + c.ward + ', Rajpura'}
+        ${c.coords ? `<br><a style="color:var(--primary);font-size:.76rem;font-weight:700" target="_blank" rel="noopener"
+          href="https://www.google.com/maps?q=${c.coords.lat},${c.coords.lng}">📍 View on Google Maps ↗</a>` : ''}</dd>
+      <dt>Description</dt><dd>${c.description}</dd>
+      ${c.assignedOfficer ? `<dt>Assigned officer</dt><dd><b>${c.assignedOfficer.name}</b> · 📞 ${c.assignedOfficer.phone}</dd>` : ''}
+    </dl>
+    ${c.photo ? `<p style="font-weight:700;font-size:.84rem;margin:1rem 0 .4rem">Attached evidence</p><img src="${c.photo}" style="max-height:200px;border-radius:10px;border:1px solid var(--line)">` : ''}
+    ${c.files && c.files.length ? `<p style="font-size:.79rem;color:var(--muted);margin-top:.4rem">📎 ${c.files.join(', ')}</p>` : ''}
+    <p style="font-weight:700;font-size:.84rem;margin:1.2rem 0 .6rem">File movement record</p>
+    <div class="ledger">${ledgerHTML(c)}</div>
+    ${actions}`;
+  document.getElementById('modalBg').classList.add('open');
+}
+window.closeModal = () => document.getElementById('modalBg').classList.remove('open');
+document.getElementById('modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function closeC(appNo, rating){
+  const list = DB.get('complaints'), c = list.find(x => x.appNo === appNo);
+  c.status = STATUS.CLOSED; c.rating = rating;
+  c.timeline.push({ status:STATUS.CLOSED, note:`Citizen confirmed resolution and closed the grievance with a ${rating}-star rating.`, by:me.name, at:Date.now() });
+  DB.set('complaints', list); closeModal(); renderAll(); toast('Grievance closed. Thank you for the feedback!');
+}
+function reopenC(appNo){
+  const list = DB.get('complaints'), c = list.find(x => x.appNo === appNo);
+  c.status = STATUS.REOPENED; c.escalated = true;
+  c.timeline.push({ status:STATUS.REOPENED, note:'Citizen reported the issue as unresolved. File reopened with priority flag and marked to the higher official.', by:me.name, at:Date.now() });
+  DB.set('complaints', list); closeModal(); renderAll(); toast('Grievance reopened with priority.', 'bad');
+}
+
+/* ---------- Boot ---------- */
+function renderAll(){ renderOverview(); renderList(); renderWard(); renderMC(); renderProfile(); }
+renderAll();
+
+/* ---------- File a grievance (integrated into this dashboard — no page jump) ---------- */
+let fileFormReady = false;
+function initFileForm(){
+  if (fileFormReady) { setTimeout(() => window._saarthiMap && window._saarthiMap.invalidateSize(), 60); return; }
+  fileFormReady = true;
+
+  const cForm = document.getElementById('cForm');
+  cForm.name.value = me.name; cForm.phone.value = me.phone;
+
+  const sel = document.getElementById('deptSel');
+  sel.innerHTML += allDepartments().map(d => `<option value="${d.id}">${d.ico} ${d.name}</option>`).join('');
+  sel.addEventListener('change', () => {
+    const hint = document.getElementById('deptHint');
+    if (sel.value === 'mc-office') {
+      hint.textContent = `Goes to ${w.mcName} (Ward ${me.ward}), who can forward it to any department on your behalf.`;
+    } else if (sel.value) {
+      const d = officerByDept(sel.value);
+      hint.textContent = `Designated officer: ${d.officer} (${d.designation}) · resolves within ${deptSlaHours(sel.value)} hours${deptById(sel.value).emergency ? ' (emergency service)' : ''}.`;
+    } else hint.textContent = '';
+  });
+
+  const RAJPURA = { lat: 30.4795, lng: 76.5947 };
+  const streetLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 });
+  const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri World Imagery', maxZoom: 19 });
+  const map = L.map('map', { center: [RAJPURA.lat, RAJPURA.lng], zoom: 14, layers: [streetLayer] });
+  window._saarthiMap = map;
+  let marker = null;
+  const MapToggle = L.control({ position: 'topright' });
+  MapToggle.onAdd = function(){
+    const div = L.DomUtil.create('div', 'map-toggle');
+    div.innerHTML = `<button type="button" class="mt-b on" data-l="street">Map</button><button type="button" class="mt-b" data-l="sat">Satellite</button>`;
+    L.DomEvent.disableClickPropagation(div);
+    div.querySelectorAll('.mt-b').forEach(b => b.addEventListener('click', () => {
+      div.querySelectorAll('.mt-b').forEach(x => x.classList.remove('on')); b.classList.add('on');
+      if (b.dataset.l === 'sat') { map.removeLayer(streetLayer); map.addLayer(satLayer); }
+      else { map.removeLayer(satLayer); map.addLayer(streetLayer); }
+    }));
+    return div;
+  };
+  MapToggle.addTo(map);
+  setTimeout(() => map.invalidateSize(), 150);
+
+  async function setPin(lat, lng){
+    cForm.lat.value = lat; cForm.lng.value = lng;
+    if (marker) marker.setLatLng([lat, lng]);
+    else marker = L.marker([lat, lng], { draggable:true }).addTo(map)
+          .on('dragend', e => { const p = e.target.getLatLng(); setPin(p.lat, p.lng); });
+    map.setView([lat, lng], 17);
+    const hint = document.getElementById('addrHint');
+    hint.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)} — ${t('fetchingAddr')}`;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+      const { display_name } = await res.json();
+      hint.textContent = `📍 ${display_name}`;
+      cForm.dataset.address = display_name;
+    } catch {
+      hint.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      cForm.dataset.address = '';
+    }
+  }
+  map.on('click', e => setPin(e.latlng.lat, e.latlng.lng));
+  document.getElementById('locBtn').addEventListener('click', () => {
+    if (!navigator.geolocation) return toast(t('noGeo'), 'bad');
+    toast(t('locating'));
+    navigator.geolocation.getCurrentPosition(
+      p => setPin(p.coords.latitude, p.coords.longitude),
+      () => toast(t('geoDenied'), 'bad'));
+  });
+
+  let photoData = null;
+  document.getElementById('photoIn').addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, 800 / img.width);
+        const cv = document.createElement('canvas');
+        cv.width = img.width * scale; cv.height = img.height * scale;
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        photoData = cv.toDataURL('image/jpeg', 0.7);
+        const prev = document.getElementById('photoPrev');
+        prev.style.display = 'block'; prev.querySelector('img').src = photoData;
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  let docNames = [];
+  document.getElementById('docsIn').addEventListener('change', e => {
+    docNames = [...e.target.files].map(f => f.name);
+    document.getElementById('docsHint').textContent = docNames.length ? '📎 ' + docNames.join(', ') : t('docsHint');
+  });
+
+  cForm.addEventListener('submit', e => {
+    e.preventDefault(); clearInvalid(cForm);
+    let ok = true;
+    const fail = (input, msg) => { setInvalid(input, msg); ok = false; };
+    if (!sel.value) fail(sel, 'Choose where to send this grievance.');
+    if (cForm.subject.value.trim().length < 8) fail(cForm.subject, 'Give a clear subject (at least 8 characters).');
+    if (cForm.description.value.trim().length < 25) fail(cForm.description, 'Describe the issue in at least 25 characters.');
+    if (!cForm.lat.value) {
+      fail(cForm.lat, 'Pin the issue location — click the map or use "Use my current location".');
+      document.getElementById('addrHint').style.color = 'var(--danger)';
+    }
+    if (!ok) { toast('Please complete the highlighted fields.', 'bad'); return; }
+
+    const deptId = sel.value;
+    const code = deptId === 'mc-office' ? MC_DEPT.code : deptById(deptId).code;
+    const appNo = genAppNo(code);
+    const now = Date.now();
+    const frontLine = deptId === 'mc-office' ? null : frontLineOfficer(deptId);
+    const target = deptId === 'mc-office'
+      ? `the office of ${w.mcName}, Municipal Councillor, Ward ${me.ward}`
+      : `${frontLine ? frontLine.name + ' (' + frontLine.designation + ')' : 'the designated officer'}, ${deptById(deptId).name} Department`;
+
+    const complaint = {
+      appNo, citizenId: me.id, name: me.name, phone: me.phone,
+      ward: me.ward, dept: deptId,
+      subject: cForm.subject.value.trim(), description: cForm.description.value.trim(),
+      coords: { lat: Number(cForm.lat.value), lng: Number(cForm.lng.value) },
+      address: cForm.dataset.address || '',
+      photo: photoData, files: docNames,
+      status: STATUS.SUBMITTED, escalated: false,
+      assignedOfficer: null, rating: null,
+      currentOfficerId: frontLine ? frontLine.id : null,
+      level: frontLine ? frontLine.rank : null,
+      levelStartedAt: now,
+      escalatedToDC: false, escalatedToCMO: false, urgentFromCMO: false, cmoAutoBan: false, forceClosed: false,
+      createdAt: now,
+      timeline: [{
+        status: STATUS.SUBMITTED,
+        note: `Grievance registered on Saarthi and forwarded to ${target}. Resolution due within ${deptSlaHours(deptId)} hours.`,
+        by: 'Saarthi System', at: now
+      }]
+    };
+    const list = DB.get('complaints'); list.push(complaint); DB.set('complaints', list);
+    const n = notifyFiled(user, complaint);
+
+    document.getElementById('doneNo').textContent = appNo;
+    document.getElementById('doneMeta').textContent = `Sent to ${target}.`;
+    document.getElementById('doneNotify').textContent = n.sent
+      ? `📧 Confirmation sent to ${user.email || 'your email'} and 📱 SMS sent to ${user.phone}.`
+      : `Notifications are currently turned off by the administrator.`;
+    document.getElementById('doneBg').classList.add('open');
+
+    // reset the form for next use, then go back to the grievance list behind the modal
+    cForm.reset(); document.getElementById('photoPrev').style.display = 'none';
+    document.getElementById('deptHint').textContent = ''; document.getElementById('addrHint').textContent = t('noLocation');
+    photoData = null; docNames = [];
+    if (marker) { map.removeLayer(marker); marker = null; }
+    renderAll();
+  });
+}
+function closeDone(){
+  document.getElementById('doneBg').classList.remove('open');
+  go('grievances');
+}
+
+// Deep-link support for old links/bookmarks: citizen.html?to=mc#file
+if (location.hash === '#file') {
+  go('file');
+  if (new URLSearchParams(location.search).get('to') === 'mc') {
+    setTimeout(() => {
+      const sel = document.getElementById('deptSel');
+      sel.value = 'mc-office'; sel.dispatchEvent(new Event('change'));
+    }, 50);
+  }
+}
+</script>
+</body>
+</html>
