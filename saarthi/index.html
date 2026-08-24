@@ -27,11 +27,21 @@
     <nav class="nav-links">
       <a href="index.html" class="nav-item active" data-i18n="navHome">Home</a>
       <a href="#departments" class="nav-item" data-i18n="navDepts">Departments</a>
-      <a href="#grievance-map" class="nav-item" data-i18n="navMap">Grievance Map</a>
+      <a href="#grievance-map" class="nav-item" data-i18n="navMap">Grievance Track</a>
+      <a href="directory.html" class="nav-item" data-i18n="navDirectory">Department directory</a>
       <a href="#how-it-works" class="nav-item" data-i18n="navHow">How it works</a>
     </nav>
 
     <div class="head-actions">
+      <div class="wrap-rel langsw">
+        <button id="langBtn">🌐 <span id="langCur">EN</span></button>
+        <div class="lang-menu" id="langMenu">
+          <button class="lang-opt" data-lang="en">🇬🇧 English</button>
+          <button class="lang-opt" data-lang="pa">ਪੰ ਪੰਜਾਬੀ</button>
+          <button class="lang-opt" data-lang="hi">हि हिंदी</button>
+        </div>
+      </div>
+      <button class="iconbtn" id="themeBtn" title="Toggle theme">🌙</button>
       <a class="btn btn-ghost" href="login.html" data-i18n="signin">Log In</a>
       <a class="btn btn-gold" href="signup.html" data-i18n="register">Sign Up</a>
     </div>
@@ -72,11 +82,13 @@
         </div>
         <p class="tracker-desc" data-i18n="trackSub">Enter your 10-digit application number</p>
         <form id="trackForm" class="tracker-inputs-wrapper">
-          <div class="tracker-row" style="display: flex; gap: 0.5rem; width: 100%;">
-            <input id="trackNo" maxlength="10" placeholder="26XX000000" inputmode="numeric" required style="flex: 1;">
-            <button type="submit" data-i18n="track">Track</button>
+          <div class="tracker-row">
+            <input id="trackNo" maxlength="10" placeholder="26XX000000" inputmode="numeric" required>
+            <input id="trackPhone" maxlength="10" inputmode="numeric" placeholder="Registered mobile no." required>
           </div>
+          <button type="submit" class="tracker-submit" data-i18n="track">Track</button>
         </form>
+        <p class="tracker-privacy">For your privacy, we verify the complainant's registered mobile number before showing any details.</p>
         <div id="trackResult"></div>
       </div>
     </div>
@@ -336,13 +348,20 @@ document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
 document.getElementById('trackForm').addEventListener('submit', e => {
   e.preventDefault();
   const no = document.getElementById('trackNo').value.trim();
+  const phone = document.getElementById('trackPhone').value.trim();
   const box = document.getElementById('trackResult');
   const c = DB.get('complaints').find(x => x.appNo === no);
   if (!/^\d{10}$/.test(no)) { box.innerHTML = `<p style="color:var(--danger);font-size:.8rem;margin-top:.6rem">Enter a valid 10-digit number.</p>`; return; }
   if (!c) { box.innerHTML = `<p style="color:var(--danger);font-size:.8rem;margin-top:.6rem">No grievance found.</p>`; return; }
-  box.innerHTML = `<div style="background:var(--paper);border-radius:10px;padding:.9rem;margin-top:.8rem;position:relative">
-      <button type="button" onclick="clearTrackResult()" style="position:absolute;top:.5rem;right:.6rem;background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;line-height:1" title="Close">×</button>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.5rem;padding-right:1.4rem"><span class="mono">${c.appNo}</span>${badge(c)}</div>
+  if (!/^[6-9]\d{9}$/.test(phone) || c.phone !== phone) {
+    box.innerHTML = `<p style="color:var(--danger);font-size:.8rem;margin-top:.6rem">Mobile number does not match our records for this application. Please check and try again.</p>`;
+    return;
+  }
+  box.innerHTML = `<div style="background:var(--paper);border-radius:10px;padding:.9rem;margin-top:.8rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.5rem">
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;min-width:0"><span class="mono">${c.appNo}</span>${badge(c)}</div>
+        <button type="button" onclick="clearTrackResult()" style="flex-shrink:0;background:none;border:none;font-size:1.3rem;color:var(--muted);cursor:pointer;line-height:1;padding:0 0 0 .4rem" title="Close">×</button>
+      </div>
       <div style="font-size:.83rem;margin-bottom:.6rem"><b>${c.subject}</b> · ${deptById(c.dept).name}</div>
       <div class="ledger">${ledgerHTML(c)}</div></div>`;
 });
