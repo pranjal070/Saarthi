@@ -116,12 +116,24 @@ Open your browser at **[http://localhost:3000](http://localhost:3000)**.
 
 ---
 
-## 👤 Author & Contributor
+## 👥 Team & Contributors
 
-Designed and developed with ❤️ by **[parvvsood](https://github.com/parvvsood)**.
+<div align="center">
+
+| Contributor | GitHub Profile | Role |
+| :--- | :--- | :--- |
+| **Parv Sood** | [@parvvsood](https://github.com/parvvsood) | Lead Frontend & UI/UX Developer |
+| **Pranjal Thakur** | [@pranjal070](https://github.com/pranjal070) | Repository Maintainer & Core Developer |
+| **Shehjeet Singh** | [@Shehjeet-Singh](https://github.com/Shehjeet-Singh) | Core Developer & Contributor |
+
+<br>
+
+[![parvvsood](https://img.shields.io/badge/Parv%20Sood-parvvsood-orange?style=for-the-badge&logo=github)](https://github.com/parvvsood)
+[![pranjal070](https://img.shields.io/badge/Pranjal%20Thakur-pranjal070-black?style=for-the-badge&logo=github)](https://github.com/pranjal070)
+[![Shehjeet-Singh](https://img.shields.io/badge/Shehjeet%20Singh-Shehjeet--Singh-blue?style=for-the-badge&logo=github)](https://github.com/Shehjeet-Singh)
 
 ---
 
-<div align="center">
-  <sub>Built for the citizens of Rajpura, Punjab · 🏛️ SAARTHII Civic Tech Platform</sub>
+<sub>Built for the citizens of Rajpura, Punjab · 🏛️ SAARTHII Civic Tech Platform</sub>
+
 </div>
