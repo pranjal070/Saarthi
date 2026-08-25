@@ -5121,3 +5121,82 @@ footer a:hover::after {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ============================================================
+   VIBRANT PRIMARY ORANGE DASHBOARD SIDEBAR THEME OVERRIDE
+   Applies to all dashboards: Citizen, Officer, Councillor, Authority
+   ============================================================ */
+aside.side,
+.dash aside.side,
+.dash .side,
+.side {
+  background: linear-gradient(180deg, #f25100 0%, #d94800 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 4px 0 20px rgba(242, 81, 0, 0.2) !important;
+}
+
+[data-theme="dark"] aside.side,
+[data-theme="dark"] .dash aside.side,
+[data-theme="dark"] .dash .side,
+[data-theme="dark"] .side {
+  background: linear-gradient(180deg, #ea580c 0%, #9a3412 100%) !important;
+}
+
+aside.side .who,
+.dash .side .who {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+aside.side .who b,
+.dash .side .who b {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+aside.side .who span,
+.dash .side .who span {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+aside.side a,
+aside.side button.navlink,
+.dash .side a,
+.dash .side button.navlink {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-weight: 600 !important;
+}
+
+aside.side a:hover,
+aside.side button.navlink:hover,
+.dash .side a:hover,
+.dash .side button.navlink:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+aside.side a.on,
+.dash .side a.on {
+  background: #ffffff !important;
+  color: #f25100 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="dark"] aside.side a.on,
+[data-theme="dark"] .dash .side a.on {
+  background: #ffffff !important;
+  color: #ea580c !important;
+}
+
+aside.side .logout,
+.dash .side .logout {
+  color: #ffffff !important;
+  opacity: 0.95 !important;
+  font-weight: 700 !important;
+}
+
+aside.side .logout:hover,
+.dash .side .logout:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+  opacity: 1 !important;
+}
