@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=38.0">
+<link rel="stylesheet" href="css/style.css?v=110.0">
 <style>
 :root {
   --primary: #f25100 !important;
@@ -70,6 +70,77 @@ body {
   background: linear-gradient(135deg, #f25100 0%, #ff5500 100%) !important;
   color: #ffffff !important;
   padding: 1.8rem 0 !important;
+}
+
+/* Dark Mode Overrides for Landing Page */
+[data-theme="dark"] body {
+  background: #0b1320 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .hero {
+  background: #0b1320 !important;
+  background-image: radial-gradient(circle at 80% 20%, rgba(242, 81, 0, 0.18) 0%, transparent 70%),
+                    radial-gradient(circle at 10% 80%, rgba(242, 81, 0, 0.12) 0%, transparent 50%) !important;
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] .site-head {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .nav-item {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .nav-item:hover,
+[data-theme="dark"] .nav-item.active {
+  color: #f25100 !important;
+}
+
+[data-theme="dark"] .hero-display-title {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .hero-subtitle-lead {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .btn-hero-secondary {
+  background: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .dept-card-new,
+[data-theme="dark"] .step-card-claude,
+[data-theme="dark"] .card,
+[data-theme="dark"] .map-section-wrapper {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .dept-card-new h3,
+[data-theme="dark"] .step-card-claude h3,
+[data-theme="dark"] .section-title-claude,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .dept-card-new p,
+[data-theme="dark"] .step-card-claude p,
+[data-theme="dark"] .section-subtitle-claude,
+[data-theme="dark"] p {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .pillar-badge {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
 }
 </style>
 </head>
