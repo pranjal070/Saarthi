@@ -1,0 +1,10 @@
+const router = require('express').Router(), c = require('../controllers/authController');
+const { need } = require('../middleware/auth'), { limiter } = require('../middleware/rateLimit');
+router.post('/login', limiter, c.login);
+router.post('/register', limiter, c.register);
+router.get('/verify-email', c.verifyEmail);
+router.post('/resend-verification', limiter, need, c.resendVerification);
+router.post('/forgot-password', limiter, c.forgotPassword);
+router.post('/reset-password', limiter, c.resetPassword);
+router.post('/change-password', need, c.changePassword);
+module.exports = router;

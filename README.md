@@ -1,139 +1,43 @@
-<div align="center">
+# Saarthi v42 — Civic Grievance Portal, Govt. of Punjab (MVC backend)
 
-# 🏛️ SAARTHII
-### *One Nation · One Portal — Smart Civic Grievance & Resolution Platform*
+Stack: **Node.js + Express + MongoDB (Mongoose)** backend, vanilla HTML/CSS/JS frontend. One GitHub repo, two folders: `frontend/` and `backend/`.
 
-[![Govt of Punjab](https://img.shields.io/badge/Govt.%20of-Punjab%20Initiative-orange?style=for-the-badge&logo=india&logoColor=white)](https://github.com/pranjal070/Saarthi)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
-[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
-[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Status](https://img.shields.io/badge/Status-Active%20Production-success?style=for-the-badge)](https://github.com/pranjal070/Saarthi)
-
-<p align="center">
-  <b>Empowering governance through technology in Rajpura, Punjab.</b><br>
-  A modern, high-performance civic grievance portal connecting citizens, department officials, municipal councillors, and city administrators in real time.
-</p>
-
----
-
-</div>
-
-## ✨ Key Innovations & Features
-
-### 👁️ 1. Interactive Eyeball Creatures Auth Stage
-- **360° Mouse Pupil Tracking**: Real-time 60 FPS physics engine tracking cursor movement using `Math.atan2` and `Math.hypot`.
-- **😮 Surprised Mouth Typing Reaction**: Creature 4 (Yellow Sunshine Pill) morphs its mouth into a surprised open state (`😮`) whenever a user types in any input or select field.
-- **🎵 Password-Peek Whistling Animation**: Toggling password visibility (👁️) triggers Creature 4 to whistle floating music notes while all 4 creatures glance left!
-- **Stationary Layout**: Fixed column positioning ensuring zero overlap with branding logos across all login tabs.
-
-### 📊 2. Multi-Role Dashboard Ecosystem
-- **👤 Citizen Portal**: File grievances with photos, track SLA status, view ward councillor contacts, and inspect filing trends.
-- **👮 Department Officer Portal**: Filter, assign, investigate, and dispose of grievances across Police, Fire Services, Water & Sanitation, Electricity, and Roads.
-- **🏛️ Municipal Councillor (MC) Portal**: Ward-level grievance monitoring, citizen communication, and department forwarding.
-- **🖥️ City Administration Portal**: Executive overview for Deputy Commissioner (Patiala), Executive Officer (MC Rajpura), and Chief Minister's Office (CMO).
-
-### ⚡ 3. Animated Gliding Laser Progress Track
-- Real-time scroll-based horizontal neon orange laser line gliding across step cards, igniting step circles (`1`, `2`, `3`, `4`) into solid orange glowing spheres sequentially.
-
-### 🗺️ 4. Geo-Tagged Map & India Post API
-- **Interactive Leaflet Map**: Geo-referenced grievance tracking with heatmap distribution across Rajpura wards.
-- **India Post REST API**: Automatic city and locality verification from 6-digit pincodes.
-
-### 🌐 5. Internationalization (i18n) & Theme Engine
-- **Multi-Language**: Instant switching between English (🇬🇧), Punjabi (🇵🇧), and Hindi (🇮🇳).
-- **Vibrant Theme System**: Signature primary orange (`#f25100`), navy dark (`#0b1320`), light paper, and dark mode engine.
-
----
-
-## 🎨 Design System
-
-| Element | Specification |
-| :--- | :--- |
-| **Primary Accent** | `#f25100` *(Vibrant Orange)* |
-| **Primary Hover** | `#d94800` *(Deep Orange)* |
-| **Dark Navy** | `#0b1320` *(Rich Navy)* |
-| **Typography** | `Plus Jakarta Sans`, `Caveat` *(Script Annotation)* |
-| **Icons** | Clean Vector SVGs |
-
----
-
-## 📁 Repository Structure
-
-```tree
-Saarthi/
-├── 📄 index.html              # Landing Page (Hero, Dept Cards, How It Works, Stats)
-├── 🔑 login.html              # Interactive Eyeball Creatures Login Page
-├── 📝 signup.html             # Centered Citizen Registration Page
-├── 📊 citizen.html            # Citizen Dashboard & Grievance Tracker
-├── 👮 officer.html            # Department Officer Grievance Disposal Workspace
-├── 🏛️ mc.html                 # Municipal Councillor Ward Dashboard
-├── 🖥️ authority.html          # City-wide Administration Portal
-├── 📞 directory.html          # Emergency Contacts & Department Directory
-├── 🎨 css/
-│   └── style.css              # Core Design System, Animations & Responsive Grid
-└── ⚙️ js/
-    ├── app.js                 # Session Management, Auth & Grievance DB Engine
-    ├── data.js                # Department, Officer & Ward Data Stores
-    ├── i18n.js                # Multi-language Translation System
-    ├── notify.js              # Real-Time Toast Notifications
-    └── charts.js              # Analytics Visualization Engine
+## MVC structure
 ```
-
----
-
-## 🚀 Quick Start Guide
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/pranjal070/Saarthi.git
-cd Saarthi
+backend/
+  server.js            entry: config → MongoDB connect → listen + escalation timer
+  app.js               Express app: helmet, body parsers, CORS, auth, routes, static frontend, error handler
+  config/env.js        reads .env, validates required settings
+  models/              M  Rec.js (all records), Meta.js (counters/revision), Token.js (e-mail links, TTL index)
+  controllers/         C  authController, dataController, trackController, uploadController, adminController
+  routes/              URL → controller maps (authRoutes, dataRoutes, index)
+  middleware/          auth (JWT), rateLimit (+ account lockout), cors, errorHandler
+  services/            business logic: policy, recordService, notificationService, escalationService, revisionService
+  utils/               HttpError, asyncHandler, security (password rules, Aadhaar hash, tokens), mail (Nodemailer)
+  scripts/             seed.js (loads starting data), shim.js
+frontend/              V  HTML pages, css/, js/ (api.js talks to the API)
+docs/                  Saarthi.postman_collection.json, VIVA_PREP.md
 ```
+Request flow: `Browser → routes → middleware → controller → service → model → MongoDB`, and back as JSON. Errors anywhere go to `middleware/errorHandler.js`.
 
-### 2. Launch Local Server
-No build tools or node dependencies required! Run any static HTTP server:
+## Run locally (Windows / VS Code)
+1. Install Node.js LTS. Create a free MongoDB Atlas cluster, add a database user, allow your IP (or 0.0.0.0/0), copy the connection string.
+2. In a terminal: `cd backend`, copy `.env.example` to `.env`, fill it in (never share or commit `.env`).
+3. `npm install` → `npm run seed` (once) → `npm start` → open http://localhost:3000 (the backend also serves the frontend).
+`npm run seed -- --reset` wipes and reloads the database.
 
-```bash
-# Using Python (Built-in)
-python -m http.server 3000
+## Deploy (Render)
+Push the repo to GitHub, then Render → New Web Service: Root Directory `backend`, Build `npm install`, Start `npm start`, Environment: `MONGO_URI, JWT_SECRET, ADMIN_PASSWORD, AADHAAR_PEPPER, MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS, MAIL_FROM, NODE_ENV=production`, then `PUBLIC_URL=https://<your-service>.onrender.com`. Run `npm run seed` once from your PC against the same Atlas database. Atlas → Network Access must allow 0.0.0.0/0.
+Because the backend serves the frontend, the frontend calls the deployed API at `/api` automatically. To host the frontend elsewhere, set `window.SAARTHI_API = 'https://<service>.onrender.com/api'` before `js/api.js` loads, and set `PUBLIC_URL` to the frontend address for CORS.
 
-# Or using Node.js npx
-npx serve .
-```
+## API testing
+Import `docs/Saarthi.postman_collection.json` into Postman (or Thunder Client). Set `baseUrl` (local or Render) and `adminPassword`, run **Login – supreme admin** (it stores the token automatically), then any other request.
 
-Open your browser at **[http://localhost:3000](http://localhost:3000)**.
+## Features
+JWT sign-in for citizens/officers/councillors/administration, bcrypt hashing, strong-password rule, one account per mobile/e-mail/Aadhaar (Aadhaar kept only as a keyed one-way hash + last 4 digits), e-mail verification, password reset, Multer uploads, e-mails on registration / grievance filed / every status change / escalation (Nodemailer + Gmail SMTP; with `MAIL_HOST` empty it runs in test mode and saves e-mails in `backend/outbox/`), server-side SLA escalation every 10 min, role-based access (MLA/MP/Mayor view-only), `helmet`, CORS allow-list, request-size limits, 5-wrong-passwords lockout.
 
----
+## Demo accounts (after seeding)
+District admin `district@123`, DC `dc@123`, EO `eo@123`, Mayor `mayor@123`, MLA `mla@123`, MP `mp@123`, CMO `cmo@123`, Minister `minister@123`, Councillor `mc@123`, employees `officer@123` (sign in with roll ID). Supreme admin password = the `ADMIN_PASSWORD` you set. Change defaults before any public demo.
 
-## 🔑 Demo Account Credentials
-
-| Portal Role | Username / Identifier | Demo Password |
-| :--- | :--- | :--- |
-| **Citizen** | Register new or use active mobile | User Password |
-| **Dept. Officer** | Select Department & Officer | `officer@123` |
-| **Municipal Councillor** | Select Ward Number | `mc@123` |
-| **Administration** | Deputy Commissioner / EO Rajpura | `dc@123` · `eo@123` |
-
----
-
-## 👥 Team & Contributors
-
-<div align="center">
-
-| Contributor | GitHub Profile | Role |
-| :--- | :--- | :--- |
-| **Parv Sood** | [@parvvsood](https://github.com/parvvsood) | Lead Frontend & UI/UX Developer |
-| **Pranjal Thakur** | [@pranjal070](https://github.com/pranjal070) | Repository Maintainer & Core Developer |
-| **Shehjeet Singh** | [@Shehjeet-Singh](https://github.com/Shehjeet-Singh) | Core Developer & Contributor |
-
-<br>
-
-[![parvvsood](https://img.shields.io/badge/Parv%20Sood-parvvsood-orange?style=for-the-badge&logo=github)](https://github.com/parvvsood)
-[![pranjal070](https://img.shields.io/badge/Pranjal%20Thakur-pranjal070-black?style=for-the-badge&logo=github)](https://github.com/pranjal070)
-[![Shehjeet-Singh](https://img.shields.io/badge/Shehjeet%20Singh-Shehjeet--Singh-blue?style=for-the-badge&logo=github)](https://github.com/Shehjeet-Singh)
-
----
-
-<sub>Built for the citizens of Rajpura, Punjab · 🏛️ SAARTHII Civic Tech Platform</sub>
-
-</div>
+## Known limits (honest notes)
+- SMS is not implemented. Render's free disk is wiped on deploy (uploaded files are lost) and the free service sleeps when idle (escalation pauses). Aadhaar check is checksum + duplicate protection only — it does not prove the number is genuine. Business rules for grievance workflow live partly in the browser code that the server re-uses for escalation.

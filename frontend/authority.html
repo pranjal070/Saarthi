@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Administration · Saarthi</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/icons.css">
+<link rel="stylesheet" href="css/compat.css">
+</head>
+<body>
+<script>
+// Fix: after signing out, pressing the browser Back button could show this page
+// from the browser's cache without re-checking the session — letting a signed-out
+// person appear to still be inside the dashboard. Force a fresh session check
+// whenever the page is restored from that cache.
+window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
+document.documentElement.dataset.theme=localStorage.getItem("saarthi_theme_v3")||"light";</script>
+<div class="phulkari"></div>
+<div class="dash">
+  <aside class="side">
+    <div class="side-brand"><span class="sb-mark">ਸ</span><div><b>SAARTHI</b><small>Govt. of Punjab</small></div></div>
+    <div class="who"><b id="uName"></b><span id="uMeta"></span><br><span class="auth-badge" id="uBadge" style="margin-top:.4rem"></span></div>
+    <div class="side-label">Overview</div>
+    <a class="on" data-sec="overview"><i class="mi mi-grid"></i><span data-i18n="navCityOverview">City overview</span></a>
+    <a data-sec="livemap"><i class="mi mi-map"></i><span>Live map</span></a>
+    <a data-sec="grievances"><i class="mi mi-folder"></i><span data-i18n="navAllGrievances">All grievances</span></a>
+    <a data-sec="departments"><i class="mi mi-building"></i><span data-i18n="navDepartments">Departments</span></a>
+    <a data-sec="wards"><i class="mi mi-map"></i><span data-i18n="navWards" id="navWardsLbl">Wards</span></a>
+    <div class="side-label">Directory & access</div>
+    <a data-sec="people" id="navPeople" hidden><i class="mi mi-users"></i><span data-i18n="navPeopleDir">People directory</span></a>
+    <a data-sec="hierarchy" id="navHier" hidden><i class="mi mi-layers"></i><span data-i18n="navHierarchy">Hierarchy &amp; rules</span></a>
+    <a data-sec="employees" id="navEmp" hidden><i class="mi mi-users"></i><span data-i18n="navEmployees">Employees &amp; transfers</span></a>
+    <a data-sec="geo" id="navGeo" hidden><i class="mi mi-map"></i><span data-i18n="navGeo">Punjab structure</span></a>
+    <a data-sec="districts" id="navDistricts" hidden><i class="mi mi-map"></i><span data-i18n="navDistricts">Districts &amp; tehsils</span></a>
+    <a data-sec="constituencies" id="navConst" hidden><i class="mi mi-users"></i><span data-i18n="navConst">Constituencies</span></a>
+    <a data-sec="cabinet" id="navCabinet" hidden><i class="mi mi-shield"></i><span data-i18n="navCabinet">Cabinet &amp; MLAs</span></a>
+    <a data-sec="bearers" id="navBearers" hidden><i class="mi mi-layers"></i><span data-i18n="navBearers">Office-bearers</span></a>
+    <a data-sec="deptmanage" id="navDeptManage" hidden><i class="mi mi-layers"></i><span data-i18n="navManageDept">Manage departments</span></a>
+    <a data-sec="credentials" id="navCred" hidden><i class="mi mi-key"></i><span data-i18n="navCred">Credentials</span></a>
+    <div class="side-label">System</div>
+    <a data-sec="settings" id="navSettings" hidden><i class="mi mi-cog"></i><span data-i18n="navNotifSettings">Notification settings</span></a>
+    <div class="side-label">Account</div>
+    <a data-sec="profile"><i class="mi mi-user"></i><span data-i18n="navProfile">My profile</span></a>
+    <a href="#" onclick="goHome();return false;"><i class="mi mi-home"></i><span data-i18n="navHome">Portal home</span></a>
+    <button class="navlink logout" onclick="confirmSignOut()"><i class="mi mi-logout"></i><span data-i18n="navSignout">Sign out</span></button>
+  </aside>
+
+  <div>
+    <div class="topbar">
+      <div class="hello"><b id="greet"></b><span id="dateLine"></span></div>
+      <div class="gsearch"><span class="ic"><i class="mi mi-search"></i></span><input id="globalSearch" placeholder="Search grievances…"></div>
+      <div class="wrap-rel">
+        <button class="iconbtn" id="bellBtn"><i class="mi mi-bell"></i><span class="dot-badge" id="bellDot" hidden></span></button>
+        <div class="pop" id="bellPop"><h5>City-wide escalations</h5><div id="notifList"></div></div>
+      </div>
+      <div class="wrap-rel langsw">
+        <button id="langBtn"><i class="mi mi-globe"></i> <span id="langCur">EN</span></button>
+        <div class="lang-menu" id="langMenu">
+          <button class="lang-opt" data-lang="en">🇬🇧 English</button>
+          <button class="lang-opt" data-lang="pa">ਪੰ ਪੰਜਾਬੀ</button>
+          <button class="lang-opt" data-lang="hi">हि हिंदी</button>
+        </div>
+      </div>
+      <button class="iconbtn" id="themeBtn"><i class="mi mi-moon"></i></button>
+      <div class="wrap-rel">
+        <button class="avatar" id="avaBtn"></button>
+        <div class="pop" id="avaPop" style="width:230px">
+          <h5>Signed in as</h5>
+          <div class="item"><div><div class="t" id="popName"></div><div class="s" id="popMeta"></div></div></div>
+          <div class="item" style="cursor:pointer" onclick="exportCSV()">⬇️ <div class="t">Export full record (CSV)</div></div>
+          <div class="item" style="cursor:pointer" onclick="window.print()">🖨️ <div class="t">Print this page</div></div>
+          <div class="item" style="cursor:pointer;color:var(--danger)" onclick="confirmSignOut()">↩ <div class="t">Sign out</div></div>
+        </div>
+      </div>
+    </div>
+
+    <main class="main">
+      <section class="dash-sec on" id="sec-overview">
+        <h2 class="pg" id="pgTitle"></h2>
+        <p class="pg-sub" id="pgSub"></p>
+
+        <div class="filter-bar" id="viewFilter" hidden>
+          <select id="vfDist"></select><select id="vfTehsil"></select><select id="vfLs"></select>
+          <button class="btn btn-outline btn-sm" id="vfReset" type="button">Reset</button>
+          <span id="vfNote" style="font-size:.76rem;color:var(--muted)"></span>
+        </div>
+        <div class="notice warn" id="emptyMinistry" hidden></div>
+        <div class="filter-bar">
+          <div class="seg-ctl" id="rangeCtl">
+            <button data-range="1">24 hours</button>
+            <button data-range="7">7 days</button>
+            <button class="on" data-range="30">30 days</button>
+            <button data-range="180">6 months</button>
+            <button data-range="0">All time</button>
+          </div>
+        </div>
+
+        <div class="grid-4" style="margin-bottom:1.1rem">
+          <div class="card kpi c-blue"><div class="top"><span class="lbl" data-i18n="kpiTotalGriev">Total grievances</span><div class="ic"><i class="mi mi-folder"></i></div></div><b id="kTotal">0</b></div>
+          <div class="card kpi c-amber"><div class="top"><span class="lbl" data-i18n="kpiOpenCity">Open across city</span><div class="ic"><i class="mi mi-clock"></i></div></div><b id="kOpen">0</b></div>
+          <div class="card kpi c-green"><div class="top"><span class="lbl" data-i18n="kpiResolved">Resolved</span><div class="ic"><i class="mi mi-check"></i></div></div><b id="kDone">0</b></div>
+          <div class="card kpi c-red"><div class="top"><span class="lbl" data-i18n="kpiEscalated">Escalated</span><div class="ic"><i class="mi mi-alert"></i></div></div><b id="kEsc">0</b></div>
+        </div>
+
+        <div class="split" style="margin-bottom:1.1rem">
+          <div class="panel"><div class="p-head"><h3>Load by department</h3></div><div class="p-body" id="chDonut"></div></div>
+          <div class="panel"><div class="p-head"><h3 id="slaTitle">SLA compliance</h3></div><div class="p-body" style="text-align:center" id="chGauge"></div></div>
+        </div>
+        <div class="split">
+          <div class="panel"><div class="p-head"><h3>Filing trend</h3><span class="sub" id="trendLabel">Last 6 months</span></div><div class="p-body" id="chBars"></div></div>
+          <div class="panel"><div class="p-head"><h3>Escalation watchlist</h3><span class="sub">Needs higher-level attention</span></div><div class="p-body" id="watchList"></div></div>
+        </div>
+      </section>
+
+      <section class="dash-sec" id="sec-livemap">
+        <h2 class="pg">Live complaint map</h2>
+        <p class="pg-sub">Geotagged complaints within your area of responsibility. New and urgent complaints pulse; click a marker for details.</p>
+        <div id="mapMount"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-grievances">
+        <h2 class="pg">All grievances</h2>
+        <p class="pg-sub" id="grievSub">Full record — every department, every ward.</p>
+        <div class="filter-bar">
+          <select id="fStatus"><option value="" data-i18n="allStatuses">All statuses</option></select>
+          <select id="fDept"><option value="" data-i18n="allDepts">All departments</option></select>
+          <select id="fWard"><option value="" data-i18n="allWards">All wards</option></select>
+          <input id="fSearch" placeholder="Search application no. / subject / citizen" data-i18n-ph="searchAppSubject">
+          <button class="btn btn-outline btn-sm" onclick="exportCSV()" data-i18n="csvShort">⬇️ CSV</button>
+        </div>
+        <div id="listArea"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-departments">
+        <h2 class="pg">Department performance</h2>
+        <p class="pg-sub" id="deptPerfSub">Disposal rate and load for every department.</p>
+        <div class="panel"><div class="p-head"><h3 id="deptPerfTitle">All departments</h3></div><div class="p-body" id="deptRows"></div></div>
+      </section>
+
+      <section class="dash-sec" id="sec-wards">
+        <h2 class="pg" id="wardsTitle">Ward performance</h2>
+        <p class="pg-sub" id="wardsSub">Grievance load and resolution.</p>
+        <div class="panel"><div class="p-head"><h3 id="wardsPanelTitle">Wards</h3></div><div class="p-body" id="wardRows"></div></div>
+      </section>
+
+      <section class="dash-sec" id="sec-people">
+        <h2 class="pg">People directory</h2>
+        <p class="pg-sub">Every registered citizen and every department officer on Saarthi.</p>
+        <div class="filter-bar">
+          <div class="seg-ctl">
+            <button class="on" id="ppCitizens">Citizens</button>
+            <button id="ppOfficers">Officers &amp; MCs</button>
+          </div>
+          <select id="ppWard"><option value="" data-i18n="allWards">All wards</option></select>
+          <input id="ppSearch" placeholder="Search by name or phone" data-i18n-ph="searchNamePhone">
+          <button class="btn btn-outline btn-sm" onclick="exportPeopleCSV()" data-i18n="btnExportCSV">⬇️ Export CSV</button>
+        </div>
+        <div id="peopleArea"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-hierarchy">
+        <h2 class="pg">Hierarchy &amp; reporting rules</h2>
+        <p class="pg-sub" id="hierSub"></p>
+        <div class="filter-bar" id="hierBar">
+          <select id="hierDist"></select>
+          <select id="hierDept"></select>
+        </div>
+        <div class="split">
+          <div class="panel">
+            <div class="p-head"><h3 id="posTitle">Positions</h3><span class="sub">Rank 1 = department head</span></div>
+            <div class="p-body">
+              <div id="posList"></div>
+              <form id="posForm" style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line)">
+                <p style="font-weight:700;font-size:.88rem;margin-bottom:.6rem">➕ Create a new position</p>
+                <div class="form-grid">
+                  <div class="field"><label>Position title <span class="req">*</span></label><input id="posName" placeholder="e.g. Additional SP"></div>
+                  <div class="field"><label>Rank <span class="req">*</span></label><input id="posRank" type="number" min="1" value="2"></div>
+                  <div class="field full"><label style="display:flex;align-items:flex-start;gap:.5rem"><input type="checkbox" id="posInsert" checked style="width:auto;margin-top:.2rem"> <span>Insert at this rank — whoever is at this rank or below moves one step down, so the new position slots into the chain of command.</span></label></div>
+                </div>
+                <button class="btn btn-pine btn-sm" type="submit">Create position</button>
+              </form>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="p-head"><h3>Reporting after an SLA breach</h3><span class="sub">Between departments</span></div>
+            <div class="p-body">
+              <p style="font-size:.82rem;color:var(--muted);margin-bottom:.8rem">Normally a file that nobody in a department resolves goes straight to the Deputy Commissioner. Here the District Administrator can decide that a department <b>reports to another department</b> first: the file lands on that department's head officer, who gets a fresh SLA window. Rules can chain (A → B → C). Departments without a rule go to the Deputy Commissioner, then the CMO.</p>
+              <div id="ruleList"></div>
+              <form id="ruleForm" style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line)">
+                <p style="font-weight:700;font-size:.88rem;margin-bottom:.6rem">➕ Set a reporting line</p>
+                <div class="form-grid">
+                  <div class="field"><label>When this department breaches SLA…</label><select id="ruleFrom"></select></div>
+                  <div class="field"><label>…the file reports to</label><select id="ruleTo"></select></div>
+                </div>
+                <button class="btn btn-pine btn-sm" type="submit">Save reporting line</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dash-sec" id="sec-employees">
+        <h2 class="pg">Employees &amp; transfers</h2>
+        <p class="pg-sub" id="empSub">Roll IDs, present posts and complete posting history of every employee.</p>
+        <div id="empMount"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-geo">
+        <h2 class="pg">Punjab structure</h2>
+        <p class="pg-sub" id="geoSub">Districts, municipal corporations, councils, wards, transport depots and the council of ministers.</p>
+        <div class="grid-4" style="margin-bottom:1.1rem" id="geoKpi"></div>
+        <div class="panel" style="margin-bottom:1.1rem">
+          <div class="p-head"><h3>Municipal corporations &amp; councils</h3><span class="sub" id="geoCount"></span></div>
+          <div class="p-body">
+            <div class="filter-bar">
+              <select id="geoDist"></select>
+              <select id="geoType"><option value="">All types</option><option value="corp">Municipal Corporation</option><option value="council">Municipal Council</option><option value="np">Nagar Panchayat</option></select>
+              <input id="geoQ" placeholder="Search council">
+            </div>
+            <div id="geoTable" style="overflow-x:auto"></div>
+            <form id="ulbForm" style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line)" hidden>
+              <p style="font-weight:700;font-size:.88rem;margin-bottom:.6rem">➕ Add a council or corporation not yet on the list</p>
+              <div class="form-grid">
+                <div class="field"><label>Name <span class="req">*</span></label><input id="ulbName"></div>
+                <div class="field"><label>Type</label><select id="ulbType"><option value="council">Municipal Council</option><option value="np">Nagar Panchayat</option><option value="corp">Municipal Corporation</option></select></div>
+                <div class="field"><label>District</label><select id="ulbDist"></select></div>
+                <div class="field"><label>Number of wards <span class="req">*</span></label><input id="ulbWards" type="number" min="1" max="150"></div>
+              </div>
+              <button class="btn btn-pine btn-sm" type="submit">Add &amp; create its Executive Officer account</button>
+            </form>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:1.1rem">
+          <div class="p-head"><h3>🚌 Transport depots</h3><span class="sub" id="depotCount"></span></div>
+          <div class="p-body"><div class="filter-bar"><select id="depotDist"></select><select id="depotOp"><option value="">Both operators</option><option value="roadways">Punjab Roadways</option><option value="prtc">PRTC</option></select></div>
+            <div id="depotTable" style="overflow-x:auto"></div></div>
+        </div>
+        </section>
+
+      <section class="dash-sec" id="sec-districts">
+        <h2 class="pg">Districts &amp; tehsils</h2>
+        <p class="pg-sub" id="distSub">Create, merge and reshape districts and tehsils. Every change carries the councils, citizens and open files with it.</p>
+        <div class="panel" id="mergePanel" style="margin-bottom:1.1rem" hidden>
+          <div class="p-head"><h3>🤝 District merge requests</h3><span class="sub" id="mergeCount"></span></div>
+          <div class="p-body" id="mergeList"></div>
+        </div>
+        <div class="panel" style="margin-bottom:1.1rem">
+          <div class="p-head"><h3>Districts</h3><span class="sub" id="distCount"></span></div>
+          <div class="p-body">
+            <div id="distTable" style="overflow-x:auto"></div>
+            <form id="distForm" style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line)" hidden>
+              <p style="font-weight:700;font-size:.88rem;margin-bottom:.6rem">➕ Create a new district</p>
+              <div class="form-grid">
+                <div class="field"><label>District name <span class="req">*</span></label><input id="dsName"></div>
+                <div class="field"><label>3-letter code</label><input id="dsCode" maxlength="3" placeholder="e.g. TST" style="text-transform:uppercase"></div>
+              </div>
+              <button class="btn btn-pine btn-sm" type="submit">Create district, its administrator, DC and department hierarchy</button>
+              <p style="font-size:.74rem;color:var(--muted);margin-top:.5rem">The new district starts with its own District Administrator and Deputy Commissioner and the standard two-tier hierarchy in every department. Then move tehsils or councils into it.</p>
+            </form>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:1.1rem">
+          <div class="p-head"><h3>Tehsils &amp; sub-tehsils</h3><span class="sub" id="tehCount"></span></div>
+          <div class="p-body">
+            <div class="filter-bar"><select id="thDist"></select><input id="thQ" placeholder="Search tehsil"></div>
+            <div id="tehTable" style="overflow-x:auto"></div>
+            <form id="tehForm" style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line)" hidden>
+              <p style="font-weight:700;font-size:.88rem;margin-bottom:.6rem">➕ Create a tehsil or sub-tehsil</p>
+              <div class="form-grid">
+                <div class="field"><label>Name <span class="req">*</span></label><input id="ntName"></div>
+                <div class="field"><label>Kind</label><select id="ntKind"><option value="T">Tehsil</option><option value="ST">Sub-tehsil</option></select></div>
+                <div class="field"><label>District</label><select id="ntDist"></select></div>
+              </div>
+              <button class="btn btn-pine btn-sm" type="submit">Create</button>
+            </form>
+          </div>
+        </div>
+        <div class="panel" id="geoLogPanel" hidden>
+          <div class="p-head"><h3>Change log</h3></div><div class="p-body" id="geoLogList"></div>
+        </div>
+      </section>
+
+      <section class="dash-sec" id="sec-constituencies">
+        <h2 class="pg">Constituencies</h2>
+        <p class="pg-sub" id="constSub">The 13 Lok Sabha seats and 117 Vidhan Sabha constituencies, with the districts, councils and MLAs they cover.</p>
+        <div class="grid-4" style="margin-bottom:1.1rem" id="constKpi"></div>
+        <div class="panel" style="margin-bottom:1.1rem">
+          <div class="p-head"><h3>Vidhan Sabha constituencies</h3><span class="sub" id="acCount"></span></div>
+          <div class="p-body">
+            <div class="filter-bar"><select id="acLs"></select><select id="acDist"></select><input id="acQ" placeholder="Search constituency or MLA"></div>
+            <div id="acTable" style="overflow-x:auto"></div>
+            <p style="font-size:.74rem;color:var(--muted);margin-top:.7rem">Constituencies, Lok Sabha seats and sitting MLAs were compiled from public sources (Wikipedia, Oct 2026) and can be out of date after by-elections. The State Administrator can correct any entry.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="dash-sec" id="sec-cabinet">
+        <h2 class="pg">Cabinet &amp; MLAs</h2>
+        <p class="pg-sub" id="cabSub">Ministries, their holders and the departments each one oversees.</p>
+        <div class="panel" style="margin-bottom:1.1rem">
+          <div class="p-head"><h3>🎖️ Council of Ministers</h3><span class="sub" id="cabCount"></span></div>
+          <div class="p-body">
+            <div id="cabTable" style="overflow-x:auto"></div>
+            <form id="minForm" style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line)" hidden>
+              <p style="font-weight:700;font-size:.88rem;margin-bottom:.6rem">➕ Create a ministry</p>
+              <div class="form-grid"><div class="field"><label>Ministry name <span class="req">*</span></label><input id="nmName"></div></div>
+              <button class="btn btn-pine btn-sm" type="submit">Create ministry (vacant)</button>
+            </form>
+            <p style="font-size:.74rem;color:var(--muted);margin-top:.7rem">Portfolios were compiled from public sources and differ between them — confirm against the official notification. A minister sees only the employees and grievances of the departments listed for the ministry.</p>
+          </div>
+        </div>
+        <div class="panel" id="linkPanel" style="margin-bottom:1.1rem" hidden>
+          <div class="p-head"><h3>⚡ Quick-link departments to ministers</h3><span class="sub" id="linkCount"></span></div>
+          <div class="p-body"><p style="font-size:.82rem;color:var(--muted);margin-bottom:.7rem">Pick the ministry for each department — it saves instantly, and that minister then sees the department's complaints and employees.</p>
+            <div id="linkTable" style="overflow-x:auto"></div></div>
+        </div>
+        <div class="panel" id="cabLogPanel" hidden>
+          <div class="p-head"><h3>Cabinet changes</h3></div><div class="p-body" id="cabLogList"></div>
+        </div>
+      </section>
+
+      <section class="dash-sec" id="sec-bearers">
+        <h2 class="pg">Office-bearers</h2>
+        <p class="pg-sub" id="bearSub">President &amp; Vice President of every council, Mayor &amp; Deputy Mayor of every corporation — chosen from the registered councillors.</p>
+        <div class="filter-bar"><select id="beDist"></select><select id="beType"><option value="">All councils</option><option value="corp">Corporations</option><option value="council">Municipal councils</option><option value="np">Nagar panchayats</option></select><input id="beQ" placeholder="Search council"></div>
+        <div id="bearTable" style="overflow-x:auto"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-deptmanage">
+        <h2 class="pg">Manage departments</h2>
+        <p class="pg-sub" id="deptManageSub">Create new departments and build officer hierarchy — no code changes required.</p>
+
+        <div class="split" style="margin-bottom:1.2rem" id="deptFormsPanel">
+          <div class="panel">
+            <div class="p-head"><h3>➕ Add a new department</h3></div>
+            <div class="p-body">
+              <form id="newDeptForm">
+                <div class="form-grid">
+                  <div class="field"><label>Department name <span class="req">*</span></label><input id="ndName" placeholder="e.g. Parks & Horticulture" required></div>
+                  <div class="field"><label>Icon (emoji)</label><input id="ndIco" placeholder="🌳" maxlength="4"></div>
+                  <div class="field full"><label>Head officer's designation <span class="req">*</span></label><input id="ndDesignation" placeholder="e.g. Horticulture Officer" required></div>
+                  <div class="field"><label>Head officer's name <span class="req">*</span></label><input id="ndOffName" required></div>
+                  <div class="field"><label>Contact number <span class="req">*</span></label><input id="ndOffPhone" maxlength="10" required></div>
+                  <div class="field"><label>Head officer's district</label><select id="ndDist"></select></div>
+                  <div class="field full"><label>Office address</label><input id="ndOffice" placeholder="e.g. Parks Office, Model Town, Rajpura"></div>
+                  <div class="field full"><label>Department photo (shown on the home page card)</label>
+                    <input id="ndPhoto" type="file" accept="image/jpeg,image/png,image/webp">
+                    <div class="hint">A landscape JPG / PNG / WEBP works best. It is resized automatically (800×400) and saved with the department. Optional — without it the card shows a banner with the department's icon.</div>
+                    <img id="ndPhotoPrev" alt="" style="display:none;margin-top:.5rem;max-width:260px;width:100%;border-radius:10px;border:1px solid var(--line)"></div>
+                  <div class="field full"><label style="display:flex;align-items:center;gap:.5rem"><input type="checkbox" id="ndEmergency" style="width:auto"> Emergency service — 24-hour resolution SLA (instead of standard 36 hours)</label></div>
+                </div>
+                <button class="btn btn-pine" type="submit">Create department</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="p-head"><h3>👷 Add an officer to a department</h3><span class="sub">Build hierarchy</span></div>
+            <div class="p-body">
+              <form id="addOfficerForm">
+                <div class="field"><label>Department <span class="req">*</span></label>
+                  <select id="aoDept" required></select></div>
+                <div class="field"><label>District <span class="req">*</span></label><select id="aoDist"></select></div>
+                <div class="form-grid">
+                  <div class="field"><label>Officer name <span class="req">*</span></label><input id="aoName" required></div>
+                  <div class="field"><label>Designation <span class="req">*</span></label><input id="aoDesignation" placeholder="e.g. Sub-Divisional Officer" required></div>
+                  <div class="field"><label>Contact number <span class="req">*</span></label><input id="aoPhone" maxlength="10" required></div>
+                  <div class="field"><label>Hierarchy rank</label><input id="aoRank" type="number" min="1" value="2">
+                    <div class="hint">1 = department head (most senior). Higher numbers are more junior — a new front-line hire should get a higher number than the existing head.</div></div>
+                  <div class="field full"><label>Office address</label><input id="aoOffice"></div>
+                </div>
+                <button class="btn btn-pine" type="submit">Add to hierarchy</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel"><div class="p-head"><h3>All departments &amp; hierarchy</h3><span class="sub" id="deptCount"></span></div>
+          <div class="p-body" id="deptHierarchy"></div></div>
+      </section>
+
+      <section class="dash-sec" id="sec-credentials">
+        <h2 class="pg">Credential management</h2>
+        <p class="pg-sub">Set or reset login passwords for department officers, Municipal Councillors, and senior authority accounts. Changes take effect immediately.</p>
+        <div class="filter-bar">
+          <select id="credDist"></select>
+          <select id="credUlb"></select>
+          <input id="credQ" placeholder="Search name / roll ID / username">
+          <div class="seg-ctl">
+            <button class="on" id="credOfficers">Officers</button>
+            <button id="credMCs">Councillors (MC)</button>
+            <button id="credAuth" hidden>Authority accounts</button>
+          </div>
+        </div>
+        <div id="credArea"></div>
+      </section>
+
+      <section class="dash-sec" id="sec-settings">
+        <h2 class="pg">Notification settings</h2>
+        <p class="pg-sub">Control whether Saarthi sends confirmation and status-update emails/SMS to citizens.</p>
+        <div class="panel" style="max-width:640px">
+          <div class="p-head"><h3>Email &amp; SMS notifications</h3></div>
+          <div class="p-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem">
+              <div>
+                <b style="font-size:.92rem">Send email &amp; SMS to citizens</b>
+                <p style="font-size:.8rem;color:var(--muted);margin-top:.2rem">When off, no new grievance-filed or status-change notifications will be sent to anyone, portal-wide.</p>
+              </div>
+              <label class="switch"><input type="checkbox" id="notifyToggle"><span class="slider"></span></label>
+            </div>
+            <div class="notice info">This is a prototype simulation — real delivery would use Nodemailer (email) and Twilio (SMS) on the backend. Every simulated send is logged below exactly as it would be sent.</div>
+          </div>
+        </div>
+        <div class="panel" id="dataMovePanel" style="max-width:640px;margin-top:1.1rem;display:none">
+          <div class="p-head"><h3>💾 Move data between environments</h3></div>
+          <div class="p-body">
+            <p style="font-size:.83rem;color:var(--muted);margin-bottom:1rem">
+              Your citizens, complaints, officers, and settings live in this browser's storage — they don't travel with the zip file, and a different folder, port, or the live Netlify site each start empty. Export everything here, then import it wherever you want the same data to appear.
+            </p>
+            <div style="display:flex;gap:.7rem;flex-wrap:wrap">
+              <button class="btn btn-pine btn-sm" id="exportDataBtn">⬇️ Export all data</button>
+              <label class="btn btn-outline btn-sm" style="cursor:pointer">⬆️ Import data<input type="file" id="importDataInput" accept=".json" style="display:none"></label>
+            </div>
+            <p style="font-size:.72rem;color:var(--muted);margin-top:.7rem">Importing replaces everything currently in this browser — citizens, complaints, officers, MCs, and passwords — with the file's contents.</p>
+          </div>
+        </div>
+        <div class="panel" id="maintenancePanel" style="max-width:640px;margin-top:1.1rem;display:none">
+          <div class="p-head"><h3>🛠️ Site maintenance</h3><span class="sub" id="maintStatusBadge"></span></div>
+          <div class="p-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem">
+              <div>
+                <b style="font-size:.92rem">Take the site offline</b>
+                <p style="font-size:.8rem;color:var(--muted);margin-top:.2rem">Citizens, officers, and councillors will see a "temporarily unavailable" page instead of their dashboards. Administration sign-in always stays reachable so you can turn it back on.</p>
+              </div>
+              <label class="switch"><input type="checkbox" id="maintToggle"><span class="slider"></span></label>
+            </div>
+            <div class="field"><label>Message shown to visitors (optional)</label>
+              <input id="maintMessage" placeholder="e.g. We're upgrading Saarthi — back shortly."></div>
+            <div class="field"><label>Automatically reopen at (optional)</label>
+              <input id="maintReopenAt" type="datetime-local">
+              <div class="hint">Leave blank to keep the site closed until you switch it back on yourself.</div></div>
+            <button class="btn btn-pine btn-sm" id="maintSaveBtn">Save maintenance settings</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:1.1rem">
+          <div class="p-head"><h3>Recent notification log</h3><span class="sub" id="notifCount"></span></div>
+          <div class="p-body"><div id="notifLog"></div></div>
+        </div>
+      </section>
+
+      <section class="dash-sec" id="sec-profile">
+        <h2 class="pg">My profile</h2>
+        <p class="pg-sub">Your authority record on Saarthi.</p>
+        <div class="panel" style="max-width:600px">
+          <div class="p-head"><h3>Account details</h3></div>
+          <div class="p-body"><dl class="kv" id="authProfileKV"></dl></div>
+        </div>
+        <div class="panel" style="max-width:600px;margin-top:1.1rem" id="adminPwPanel">
+          <div class="p-head"><h3>Change my password</h3></div>
+          <div class="p-body">
+            <form id="adminPwForm">
+              <div class="field"><label>Current password</label><input type="password" id="curPw" required></div>
+              <div class="field"><label>New password</label><input type="password" id="newPw" minlength="6" required></div>
+              <div class="field"><label>Confirm new password</label><input type="password" id="confirmPw" minlength="6" required></div>
+              <button class="btn btn-pine" type="submit">Update password</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal"><div class="m-head"><h3 id="mTitle"></h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="m-body" id="mBody"></div></div>
+</div>
+
+<script src="js/punjab.js"></script>
+<script src="js/api.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script src="js/employees.js"></script>
+<script src="js/livemap.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/notify.js"></script>
+<script src="js/demo-seed.js"></script>
+<script src="js/authority.js"></script>
+</body>
+</html>

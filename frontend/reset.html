@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Choose a new password · Saarthi</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/icons.css">
+<link rel="stylesheet" href="css/compat.css">
+</head>
+<body>
+<script>document.documentElement.dataset.theme=localStorage.getItem("saarthi_theme_v3")||"light";</script>
+
+<div style="min-height:100vh;display:grid;place-items:center;padding:1rem">
+<div class="glass" style="width:100%;max-width:420px;padding:1.6rem;border-radius:16px">
+  <a href="index.html" class="brand-logo" style="display:inline-block;margin-bottom:1rem" aria-label="Saarthi home"><div class="logo-txt"><span class="l-or">SAA</span><span class="l-bl">R</span><span class="l-or">T</span><span class="l-gr">HII</span></div><div class="logo-lines"><span class="line-or"></span><span class="dot-bl"></span><span class="line-gr"></span></div></a>
+  <h2 style="margin:.2rem 0 .8rem">Choose a new password</h2>
+  <form id="f" novalidate>
+    <div class="field"><label>New password</label><input name="password" type="password" autocomplete="new-password" placeholder="Min. 10 characters"><div class="hint" style="font-size:.78rem;color:var(--muted)">10+ characters with upper &amp; lower case, a digit and a symbol.</div></div>
+    <div class="field"><label>Confirm password</label><input name="again" type="password" autocomplete="new-password"></div>
+    <button class="btn btn-pine btn-block">Save new password</button>
+    <div id="msg" style="margin-top:.8rem;font-size:.88rem"></div>
+  </form>
+  <p style="font-size:.83rem;margin-top:1rem;text-align:center"><a href="login.html" style="color:var(--primary);font-weight:600">← Back to sign in</a></p>
+</div></div>
+<div id="toast"></div>
+<script src="js/punjab.js"></script><script src="js/api.js"></script><script src="js/data.js"></script><script src="js/app.js"></script>
+<script>
+const token = new URLSearchParams(location.search).get('token') || '';
+const msg = (t, ok) => { const m = document.getElementById('msg'); m.style.color = ok ? 'var(--primary)' : 'var(--danger)'; m.textContent = t; };
+if (!token) msg('This link is incomplete. Please use the link from your email, or request a new one.');
+document.getElementById('f').addEventListener('submit', e => {
+  e.preventDefault(); const f = e.target, p = f.password.value;
+  if (p.length < 10) return msg('Password must be at least 10 characters.');
+  if (!/[a-z]/.test(p) || !/[A-Z]/.test(p)) return msg('Use both upper-case and lower-case letters.');
+  if (!/\d/.test(p)) return msg('Add at least one digit.');
+  if (!/[^A-Za-z0-9]/.test(p)) return msg('Add at least one symbol such as ! @ # $ %.');
+  if (p !== f.again.value) return msg('The two passwords do not match.');
+  API.reset(token, p).then(r => { if (!r.ok) return msg(r.error); msg('Password changed. Redirecting to sign in…', true); setTimeout(() => location.href = 'login.html', 1800); });
+});
+</script>
+</body></html>

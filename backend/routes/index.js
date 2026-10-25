@@ -1,0 +1,10 @@
+const router = require('express').Router();
+const { need, onlyRole } = require('../middleware/auth');
+const track = require('../controllers/trackController'), upload = require('../controllers/uploadController'), admin = require('../controllers/adminController');
+router.use('/auth', require('./authRoutes'));
+router.use('/', require('./dataRoutes'));
+router.post('/track', track.track);
+router.post('/upload', need, upload.uploadMiddleware, upload.upload);
+router.post('/admin/run-escalations', need, onlyRole('admin'), admin.runEscalations);
+router.get('/health', admin.health);
+module.exports = router;

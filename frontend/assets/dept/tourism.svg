@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#306da6"/><stop offset="1" stop-color="#2c1e7a"/></linearGradient>
+<radialGradient id="r" cx=".5" cy=".45" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+<rect width="400" height="240" fill="url(#g)"/>
+<circle cx="340" cy="30" r="90" fill="#fff" fill-opacity=".10"/><circle cx="40" cy="220" r="110" fill="#fff" fill-opacity=".09"/>
+<path d="M0 190 Q100 150 200 185 T400 170 V240 H0Z" fill="#000" fill-opacity=".14"/>
+<path d="M0 215 Q120 185 230 212 T400 200 V240 H0Z" fill="#000" fill-opacity=".16"/>
+<circle cx="200" cy="108" r="86" fill="url(#r)"/>
+<circle cx="200" cy="108" r="58" fill="#fff" fill-opacity=".92"/>
+<text x="200" y="108" font-size="64" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji,sans-serif">🏰</text>
+</svg>

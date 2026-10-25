@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in · Saarthi</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/icons.css">
+<link rel="stylesheet" href="css/compat.css">
+</head>
+<body>
+<script>document.documentElement.dataset.theme=localStorage.getItem("saarthi_theme_v3")||"light";</script>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo-area" href="index.html" aria-label="Saarthi home">
+      <div class="brand-logo">
+        <div class="logo-txt">
+          <span class="l-or">SAA</span><span class="l-bl">R</span><span class="l-or">T</span><span class="l-gr">HII</span>
+        </div>
+        <div class="logo-lines"><span class="line-or"></span><span class="dot-bl"></span><span class="line-gr"></span></div>
+        <span class="logo-sub" data-i18n="logoSub">One Nation — One Portal</span>
+      </div>
+    </a>
+
+    <nav class="nav-links">
+      <a href="index.html" class="nav-item" data-i18n="navHome">Home</a>
+      <a href="index.html#departments" class="nav-item" data-i18n="navDepts">Departments</a>
+      <a href="index.html#grievance-map" class="nav-item" data-i18n="navMap">Grievance Track</a>
+      <a href="directory.html" class="nav-item" data-i18n="navDirectory">Department directory</a>
+      <a href="index.html#how-it-works" class="nav-item" data-i18n="navHow">How it works</a>
+    </nav>
+
+    <div class="head-actions">
+      <div class="wrap-rel langsw">
+        <button id="langBtn"><i class="mi mi-globe"></i> <span id="langCur">EN</span></button>
+        <div class="lang-menu" id="langMenu">
+          <button class="lang-opt" data-lang="en">🇬🇧 English</button>
+          <button class="lang-opt" data-lang="pa">ਪੰ ਪੰਜਾਬੀ</button>
+          <button class="lang-opt" data-lang="hi">हि हिंदी</button>
+        </div>
+      </div>
+      <button class="iconbtn" id="themeBtn" title="Toggle theme"><i class="mi mi-moon"></i></button>
+      <a class="btn btn-ghost" href="login.html" data-i18n="signin">Log In</a>
+      <a class="btn btn-gold" href="signup.html" data-i18n="register">Sign Up</a>
+    </div>
+  </div>
+</header>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <!-- Left promo column -->
+    <div class="auth-promo">
+      <div class="auth-promo-bg">
+        <img src="assets/ashoka-emblem.png" alt="Government of India Emblem">
+      </div>
+      <div class="auth-promo-overlay"></div>
+      <div class="auth-promo-content">
+        <div class="brand-logo">
+          <div class="logo-txt">
+            <span class="l-or">SAA</span><span class="l-bl">R</span><span class="l-or">T</span><span class="l-gr">HII</span>
+          </div>
+          <div class="logo-lines">
+            <span class="line-or"></span>
+            <span class="dot-bl"></span>
+            <span class="line-gr"></span>
+          </div>
+        </div>
+        <p class="auth-tagline" data-i18n="loginTag">Empowering governance through technology.</p>
+      </div>
+    </div>
+
+    <!-- Right form column -->
+    <div class="auth-form-wrapper">
+      <div class="tabs" role="tablist">
+      <button class="active" data-tab="citizen" data-i18n="tabCitizen">Citizen</button>
+      <button data-tab="officer" data-i18n="tabOfficer">Dept. Officer</button>
+      <button data-tab="mc" data-i18n="tabMC">Councillor</button>
+      <button data-tab="auth" data-i18n="tabAuth">Administration</button>
+    </div>
+
+      <h2 class="auth-form-title" id="loginFormTitle" data-i18n="loginTitleCitizen">Login as a Proud Citizen</h2>
+
+      <div class="auth-body">
+      <form id="f-citizen" novalidate>
+        <div class="field"><label data-i18n="mobileNo">Mobile number</label>
+          <input name="phone" maxlength="10" inputmode="numeric" placeholder="10-digit mobile"><div class="err"></div></div>
+        <div class="field"><label data-i18n="password">Password</label>
+          <input name="password" type="password" placeholder="Your password"><div class="err"></div></div>
+        <button class="btn btn-pine btn-block" data-i18n="signinAs">Sign in</button>
+        <p style="font-size:.83rem;margin-top:.8rem;text-align:center"><a href="forgot.html" style="color:var(--primary);font-weight:600" data-i18n="forgotPw">Forgot password?</a></p>
+        <p style="font-size:.83rem;margin-top:.5rem;text-align:center">
+          <span data-i18n="newHere">New to Saarthi?</span> <a href="signup.html" style="color:var(--primary);font-weight:700" data-i18n="registerHere">Register here</a></p>
+      </form>
+
+      <form id="f-officer" hidden novalidate>
+        <div class="notice info">Designated officers of each department sign in here to view and dispose of grievances.</div>
+        <div class="field"><label>Employee roll ID <span style="color:var(--muted);font-weight:400">(optional — fills the rest in)</span></label>
+          <input name="empId" id="offEmpId" placeholder="e.g. PB-26-000123" style="text-transform:uppercase"><div class="err"></div></div>
+        <div class="field"><label>District</label><select name="district" id="offDistSel"></select></div>
+        <div class="field"><label data-i18n="department">Department</label><select name="dept" id="offDeptSel"></select><div class="err"></div></div>
+        <div class="field"><label>Officer</label><select name="officerId" id="offPersonSel"></select><div class="err"></div></div>
+        <div class="field"><label data-i18n="password">Password</label>
+          <input name="password" type="password" placeholder="Officer password">
+          <div class="hint"><span data-i18n="demoPass">Demo password</span>: officer@123</div><div class="err"></div></div>
+        <button class="btn btn-pine btn-block" data-i18n="signinAs">Sign in</button>
+      </form>
+
+      <form id="f-mc" hidden novalidate>
+        <div class="notice info">Municipal Councillors sign in to view grievances of their ward and forward them to departments.</div>
+        <div class="field"><label>District</label><select name="district" id="mcDistSel"></select></div>
+        <div class="field"><label>Council / corporation</label><select name="ulb" id="mcUlbSel"></select></div>
+        <div class="field"><label data-i18n="ward">Your ward</label><select name="ward" id="mcWardSel"></select><div class="err"></div></div>
+        <div class="field"><label data-i18n="password">Password</label>
+          <input name="password" type="password" placeholder="MC password">
+          <div class="hint"><span data-i18n="demoPass">Demo password</span>: mc@123</div><div class="err"></div></div>
+        <button class="btn btn-pine btn-block" data-i18n="signinAs">Sign in</button>
+      </form>
+
+      <form id="f-auth" hidden novalidate>
+        <div class="notice info">State and District System Administrators, Deputy Commissioners, council Executive Officers, Mayors, MLAs, the CMO and every Minister sign in here.</div>
+        <div class="field"><label>Sign in as</label>
+          <select name="level" id="authLevel">
+            <option value="admin">🖥️ Supreme Administrator, Punjab</option>
+            <option value="dadmin">🗂️ District System Administrator</option>
+            <option value="dc">🏛️ Deputy Commissioner</option>
+            <option value="eo">🏢 Executive Officer (council / corporation)</option>
+            <option value="mayor">🎗️ Mayor (municipal corporation)</option>
+            <option value="mla">🗳️ MLA (Vidhan Sabha constituency)</option>
+            <option value="mp">🏛️ MP (Lok Sabha)</option>
+            <option value="cmo">🏵️ Chief Minister's Office, Punjab</option>
+            <option value="minister">🎖️ Minister / Chief Minister</option>
+          </select></div>
+        <div class="field" id="authLsF" hidden><label>Lok Sabha constituency</label><select id="authLs"></select></div>
+        <div class="field" id="authAcF" hidden><label>Vidhan Sabha constituency</label><select name="ac" id="authAc"></select></div>
+        <div class="field" id="authDistF" hidden><label>District</label><select name="district" id="authDist"></select></div>
+        <div class="field" id="authAdmF" hidden><label>Administrator</label><select name="adm" id="authAdm"></select></div>
+        <div class="field" id="authUlbF" hidden><label>Council / corporation</label><select name="ulb" id="authUlb"></select></div>
+        <div class="field" id="authMinF" hidden><label>Ministry</label><select name="minister" id="authMin"></select></div>
+        <div class="field"><label data-i18n="password">Password</label>
+          <input name="password" type="password" placeholder="Authority password">
+          <div class="hint">Demo: district@123 · dc@123 · eo@123 · mayor@123 · mla@123 · mp@123 · cmo@123 · minister@123</div><div class="err"></div></div>
+        <button class="btn btn-pine btn-block" data-i18n="signinAs">Sign in</button>
+      </form>
+    </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/punjab.js"></script>
+<script src="js/api.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script src="js/i18n.js"></script>
+<script>
+initI18nSwitcher();
+// Theme toggle (persists across every page via localStorage)
+const themeBtn = document.getElementById('themeBtn');
+const applyTheme = t => { document.documentElement.dataset.theme = t; themeBtn.innerHTML = t === 'dark' ? '<i class="mi mi-sun"></i>' : '<i class="mi mi-moon"></i>'; localStorage.setItem('saarthi_theme_v3', t); };
+applyTheme(localStorage.getItem('saarthi_theme_v3') || 'light');
+themeBtn.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+document.getElementById('langBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('langMenu').classList.toggle('open'); });
+document.addEventListener('click', () => document.getElementById('langMenu').classList.remove('open'));
+
+const tabs = document.querySelectorAll('.tabs button');
+const titleKeys = { citizen:'loginTitleCitizen', officer:'loginTitleOfficer', mc:'loginTitleMC', auth:'loginTitleAuth' };
+const show = name => {
+  tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  const tEl = document.getElementById('loginFormTitle'); if (tEl) { tEl.setAttribute('data-i18n', titleKeys[name]); tEl.textContent = t(titleKeys[name]); }
+  ['citizen','officer','mc','auth'].forEach(t => document.getElementById('f-' + t).hidden = (t !== name));
+};
+tabs.forEach(b => b.addEventListener('click', () => show(b.dataset.tab)));
+const roleParam = new URLSearchParams(location.search).get('role');
+if (['officer','mc','admin'].includes(roleParam)) show(roleParam === 'admin' ? 'auth' : roleParam);
+
+const distOptions = allDistricts().map(d => `<option value="${d.id}">${districtFull(d.id)}</option>`).join('');
+const sel = id => document.getElementById(id);
+
+// ---- Officer: district → department → officer (or type a roll ID) ----
+sel('offDistSel').innerHTML = distOptions; sel('offDistSel').value = DEFAULT_DISTRICT;
+sel('offDeptSel').innerHTML = allDepartments().map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+function populateOfficerPersons(){
+  const list = officersByDept(sel('offDeptSel').value, sel('offDistSel').value);
+  sel('offPersonSel').innerHTML = list.length
+    ? list.map(o => `<option value="${o.id}">${o.name} — ${o.designation}</option>`).join('')
+    : '<option value="">No officer posted here yet</option>';
+}
+sel('offDeptSel').addEventListener('change', populateOfficerPersons);
+sel('offDistSel').addEventListener('change', populateOfficerPersons);
+populateOfficerPersons();
+
+// ---- Councillor: district → council → ward (only wards with a registered councillor) ----
+sel('mcDistSel').innerHTML = distOptions; sel('mcDistSel').value = DEFAULT_DISTRICT;
+function fillMcUlbs(){
+  const list = ulbsInDistrict(sel('mcDistSel').value);
+  sel('mcUlbSel').innerHTML = list.map(u => `<option value="${u.id}">${u.name}${ulbGeo(u.id).tehsil ? ' · Tehsil ' + ulbGeo(u.id).tehsil.name : ''}</option>`).join('');
+  if (list.some(u => u.id === DEFAULT_ULB)) sel('mcUlbSel').value = DEFAULT_ULB;
+  fillMcWards();
+}
+function fillMcWards(){
+  const regs = DB.get('mcs').filter(m => (m.ulb || DEFAULT_ULB) === sel('mcUlbSel').value).sort((a,b) => a.ward - b.ward);
+  sel('mcWardSel').innerHTML = regs.length
+    ? regs.map(m => `<option value="${m.ward}">Ward ${m.ward} — ${m.name}</option>`).join('')
+    : '<option value="">No councillor registered yet — ask the Executive Officer</option>';
+}
+sel('mcDistSel').addEventListener('change', fillMcUlbs);
+sel('mcUlbSel').addEventListener('change', fillMcWards);
+fillMcUlbs();
+
+// ---- Authority: pick the level, then only the extra fields it needs ----
+sel('authDist').innerHTML = distOptions; sel('authDist').value = DEFAULT_DISTRICT;
+sel('authLs').innerHTML = LOK_SABHA.map(l => `<option value="${l.id}">${l.name}${l.sc ? ' (SC)' : ''}</option>`).join('');
+sel('authLs').value = 'patiala';
+function fillAuthAcs(){ sel('authAc').innerHTML = allAcs().filter(a => a.ls === sel('authLs').value).map(a => `<option value="${a.no}">${a.no} · ${a.name} — ${a.mla}</option>`).join(''); }
+sel('authMin').innerHTML = allMinistries().map(m => `<option value="${m.key}">${m.title} — ${m.holder ? m.holder.name : 'vacant'}</option>`).join('');
+function fillAuthUlbs(){
+  const corpOnly = sel('authLevel').value === 'mayor';
+  sel('authUlb').innerHTML = ulbsInDistrict(sel('authDist').value).filter(u => !corpOnly || u.type === 'corp')
+    .map(u => `<option value="${u.id}">${u.name}${ulbGeo(u.id).tehsil ? ' · Tehsil ' + ulbGeo(u.id).tehsil.name : ''}</option>`).join('')
+    || '<option value="">No corporation in this district</option>';
+}
+function fillAuthAdms(){
+  const list = DB.get('authorities').filter(a => a.role === 'dadmin' && a.district === sel('authDist').value && !a.blocked);
+  sel('authAdm').innerHTML = list.map(a => `<option value="${a.username}">${a.name}</option>`).join('');
+}
+function syncAuthFields(){
+  const lv = sel('authLevel').value;
+  sel('authDistF').hidden = !['dadmin','dc','eo','mayor'].includes(lv);
+  sel('authAdmF').hidden = lv !== 'dadmin';
+  sel('authUlbF').hidden = !['eo','mayor'].includes(lv);
+  sel('authMinF').hidden = lv !== 'minister';
+  sel('authLsF').hidden = !['mla','mp'].includes(lv); sel('authAcF').hidden = lv !== 'mla';
+  if (['eo','mayor'].includes(lv)) fillAuthUlbs();
+  if (lv === 'dadmin') fillAuthAdms();
+  if (lv === 'mla') fillAuthAcs();
+}
+sel('authLevel').addEventListener('change', syncAuthFields);
+sel('authDist').addEventListener('change', () => { fillAuthUlbs(); fillAuthAdms(); });
+sel('authLs').addEventListener('change', fillAuthAcs);
+syncAuthFields();
+
+// Sign-in is verified on the server (bcrypt) and returns a JWT — see js/api.js
+const fail = (form, field, r) => setInvalid(form[field] || form.password, r.error);
+const go = (btn, p) => { const b = btn; b.disabled = true; return p.finally(() => { b.disabled = false; }); };
+function wire(id, kind, build, page){
+  const f = document.getElementById(id);
+  f.addEventListener('submit', e => {
+    e.preventDefault(); clearInvalid(f);
+    const body = build(f); if (!body) return;
+    go(f.querySelector('button[type=submit],button.btn'), API.login(kind, body)).then(r => {
+      if (!r.ok) return fail(f, r.field, r);
+      location.href = page;
+    });
+  });
+}
+wire('f-citizen', 'citizen', f => {
+  const phone = f.phone.value.trim();
+  if (!/^[6-9]\d{9}$/.test(phone)) { setInvalid(f.phone, 'Enter a valid 10-digit mobile number.'); return null; }
+  return { phone, password: f.password.value };
+}, 'citizen.html');
+wire('f-officer', 'officer', f => ({ empId: f.empId.value.trim(), officerId: f.officerId.value, password: f.password.value }), 'officer.html');
+wire('f-mc', 'mc', f => ({ ulb: f.ulb.value, ward: Number(f.ward.value), district: f.district.value, password: f.password.value }), 'mc.html');
+wire('f-auth', 'authority', f => {
+  const lv = f.level.value;
+  const username = { admin:'admin', cmo:'cmo', dadmin:f.adm.value, dc:'dc-' + f.district.value,
+                     eo:'eo-' + f.ulb.value, mayor:'mayor-' + f.ulb.value, minister:'min-' + f.minister.value,
+                     mp:'mp-' + sel('authLs').value, mla:(() => { const a = allAcs().find(x => x.no === Number(f.ac.value)); return a ? _mlaUser(a) : ''; })() }[lv];
+  return { username, password: f.password.value };
+}, 'authority.html');
+</script>
+</body>
+</html>

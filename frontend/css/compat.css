@@ -1,0 +1,119 @@
+/* v42 — pieces of the v41 feature set that Parv's stylesheet has no rules for.
+   Loaded AFTER style.css. Uses Parv's colour tokens so it follows light/dark. */
+.side-brand{display:flex;align-items:center;gap:.65rem;padding:.2rem .4rem .9rem;margin-bottom:.3rem;border-bottom:1px solid rgba(255,255,255,.18)}
+.sb-mark{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;background:#fff;color:var(--primary);font-weight:800;font-size:1.1rem}
+.side-brand b{display:block;color:#fff;font-size:.95rem;letter-spacing:.14em;line-height:1.1}
+.side-brand small{color:rgba(255,255,255,.75);font-size:.66rem}
+.side-label{font-size:.6rem;letter-spacing:.16em;color:rgba(255,255,255,.7);font-weight:700;text-transform:uppercase;padding:.9rem .6rem .25rem}
+.side a .mi,.side button .mi{margin-right:.55rem}
+.tracker-left{margin-top:1.4rem;max-width:30rem}
+.tk-clip{overflow:hidden}
+.map-fit{width:min(100%,440px);margin:0 auto;position:relative}
+.map-fit img{display:block;width:100%}
+
+/* required-star sits next to the label (v41 markup puts it after the label tag) */
+.field > label{display:inline-block;margin-right:.2rem}
+.field > .req{color:var(--danger);font-weight:700}
+.field > input,.field > select,.field > textarea,.field > .pwbox{display:block}
+.tracker-row input{min-width:0;width:100%}
+.tracker-row{display:flex;gap:.6rem;flex-wrap:wrap}
+.tracker-row input{flex:1 1 150px}
+
+/* ---------- layout safety carried over from v41 ---------- */
+[hidden]{display:none !important}
+.dash{grid-template-columns:250px minmax(0,1fr)}
+.dash > div{min-width:0}
+.side{overflow-y:auto;scrollbar-width:thin}
+.seg-ctl{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.seg-ctl button{white-space:nowrap;flex-shrink:0}
+.api-chip{display:inline-flex;align-items:center;gap:.4rem;margin-left:.8rem;padding:.12rem .55rem;border-radius:999px;font-size:.64rem;font-weight:600;border:1px solid var(--line);vertical-align:middle}
+.api-chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.api-chip.on{color:var(--success);background:var(--success-bg)}
+.api-chip.off{color:var(--muted)}
+
+/* ---------- RESPONSIVE: phones & tablets ---------- */
+/* Tables are wrapped in .tbl-scroll by app.js so they scroll sideways on their own,
+   instead of squashing columns or stretching the whole page. */
+.tbl-scroll{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+  border-radius:var(--radius);box-shadow:var(--shadow);background:var(--card);touch-action:pan-x pan-y;
+  background-image:linear-gradient(to right,var(--card),var(--card)),linear-gradient(to right,var(--card),var(--card)),
+    linear-gradient(to right,rgba(15,30,60,.18),transparent),linear-gradient(to left,rgba(15,30,60,.18),transparent);
+  background-position:left center,right center,left center,right center;background-repeat:no-repeat;background-size:24px 100%,24px 100%,12px 100%,12px 100%;
+  background-attachment:local,local,scroll,scroll}
+.tbl-scroll > .tbl{box-shadow:none;border-radius:0;background:transparent}
+.tbl-hint{display:none;font-size:.72rem;color:var(--muted);margin:.2rem 0 .35rem}
+@media(max-width:900px){
+  .dash{grid-template-columns:minmax(0,1fr)}
+  .side{position:sticky;top:0;z-index:60;height:auto;flex-direction:row;flex-wrap:nowrap;align-items:center;overflow-x:auto;overflow-y:hidden;
+    padding:.5rem .6rem;gap:.25rem;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .side::-webkit-scrollbar{display:none}
+  .side > *{flex:0 0 auto}
+  .side a,.side button.navlink{width:auto;white-space:nowrap;padding:.5rem .8rem}
+  .side .who,.side-label,.side-brand small,.side-brand b{display:none}
+  .side-brand{border:0;margin:0;padding:0 .5rem 0 .1rem}
+  .side .logout{margin-top:0}
+  .topbar{position:static;padding:.6rem 1rem;gap:.5rem}
+  .topbar .hello{flex:1 1 auto;min-width:0}
+  .main{padding:1rem}
+  .tbl{display:table !important;min-width:720px;overflow:visible}
+  .tbl th,.tbl td{white-space:nowrap}
+  .tbl td:nth-child(2),.tbl td.wrap{white-space:normal;min-width:200px}
+  .tbl th:first-child,.tbl td:first-child{position:sticky;left:0;z-index:2;background:var(--card);box-shadow:1px 0 0 var(--line)}
+  .tbl th:first-child{background:var(--sky-bg)}
+  .tbl-hint{display:block}
+  .filter-bar{gap:.5rem}
+  .filter-bar > select,.filter-bar > input{flex:1 1 140px;min-width:0}
+}
+@media(max-width:600px){
+  .site-head .wrap{flex-wrap:wrap;row-gap:.4rem;padding-block:.6rem}
+  .nav-links{order:5;width:100%;overflow-x:auto;white-space:nowrap;gap:1rem;padding-bottom:.2rem;scrollbar-width:none}
+  .nav-links::-webkit-scrollbar{display:none}
+  .head-actions{gap:.4rem;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+  .head-actions .btn{padding:.42rem .8rem;font-size:.8rem}
+  .main{padding:.8rem}
+  .modal{max-width:96vw}
+}
+@media(max-width:900px){ .dash{grid-template-rows:auto 1fr;align-content:start;min-height:0} }
+
+/* ---------- PHONES: each table row becomes a readable card (nothing hidden off-screen) ---------- */
+@media(max-width:700px){
+  .tbl-scroll{overflow:visible;background:none;box-shadow:none;border-radius:0}
+  .tbl-hint{display:none}
+  .tbl{display:block !important;min-width:0 !important;width:100%;background:transparent;box-shadow:none}
+  .tbl thead{display:none}
+  .tbl tbody{display:block}
+  .tbl tbody tr{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin:0 0 .7rem;padding:.35rem .8rem}
+  .tbl tbody tr:hover td{background:transparent}
+  .tbl tbody td{display:grid;grid-template-columns:minmax(84px,34%) minmax(0,1fr);gap:.6rem;align-items:center;
+    white-space:normal !important;min-width:0 !important;padding:.5rem 0;border-bottom:1px dashed var(--line);position:static !important;box-shadow:none !important;background:transparent !important;text-align:left}
+  .tbl tbody td:last-child{border-bottom:0}
+  .tbl tbody td::before{content:attr(data-label);font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .tbl tbody td[data-label=""]{display:block}
+  .tbl tbody td[data-label=""]::before{display:none}
+  .tbl tbody tr.tbl-one{padding:0}
+  .tbl tbody tr.tbl-one td{display:block;text-align:center;border:0;padding:1rem}
+  .tbl tbody tr.tbl-one td::before{display:none}
+  .tbl td .btn{width:auto}
+}
+@media(max-width:600px){
+  .topbar{gap:.4rem}
+  .topbar .hello span{display:none}
+  .topbar .hello b{font-size:.92rem}
+  .topbar .gsearch{order:5;width:100%}
+}
+.topbar .hello{min-width:0}
+.topbar .hello b,.topbar .hello span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:600px){.topbar .hello{flex:1 1 0}}
+@media(max-width:600px){
+  .site-head .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.4rem .5rem}
+  .logo-area{flex:0 0 auto;transform-origin:left center}
+  .brand-logo{transform:scale(.82);transform-origin:left center;margin-right:-1.4rem}
+  .nav-links{flex-wrap:nowrap !important;justify-content:flex-start !important;overflow-x:auto;white-space:nowrap;order:5;width:100%;gap:1.1rem !important;padding:.1rem 0 .25rem}
+  .nav-links .nav-item{flex:0 0 auto;font-size:.82rem}
+  .head-actions{flex-wrap:nowrap !important;gap:.3rem !important}
+  .head-actions .btn{padding:.38rem .65rem !important;font-size:.76rem !important}
+  .head-actions .langsw > button,.head-actions .iconbtn{height:34px;min-width:34px;padding:0 .5rem}
+}
+@media(max-width:900px){.hero-compact .hero-right{order:2}.hero-compact .hero-copy{order:1}.tracker-left{max-width:none}}
+/* department card: keep the small icon fully visible on the photo instead of half-cut at the edge */
+.dept-card-new .icon-badge{bottom:10px;right:12px;width:38px;height:38px;font-size:1.15rem}
