@@ -1,5 +1,12 @@
 # Saarthi v42 — Civic Grievance Portal, Govt. of Punjab (MVC backend)
 
+**Live site:** https://saarthi-c2lm.onrender.com  
+**API health check:** https://saarthi-c2lm.onrender.com/api/health  
+**Repository:** https://github.com/pranjal070/Saarthi  
+**Team:** Pranjal Thakur, Shehjeet Singh, Parv Sood
+
+> Note: the app runs on Render's free plan, so the first request after idle time can take up to a minute to wake the server.
+
 Stack: **Node.js + Express + MongoDB (Mongoose)** backend, vanilla HTML/CSS/JS frontend. One GitHub repo, two folders: `frontend/` and `backend/`.
 
 ## MVC structure
